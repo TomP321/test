@@ -75,10 +75,11 @@ from django.db import (
 )
 from django.db.models import Manager, Q, Window, signals
 from django.db.models.expressions import ColPairs
+from django.db.models.fields.fetch_modes import get_fetch_mode
 from django.db.models.fields.tuple_lookups import TupleIn
 from django.db.models.functions import RowNumber
 from django.db.models.lookups import GreaterThan, LessThanOrEqual
-from django.db.models.query import QuerySet
+from django.db.models.query import QuerySet, prefetch_related_objects
 from django.db.models.query_utils import DeferredAttribute
 from django.db.models.utils import AltersData, resolve_callables
 from django.utils.functional import cached_property
@@ -244,13 +245,9 @@ class ForwardManyToOneDescriptor:
             else:
                 rel_obj = None
             if rel_obj is None and has_value:
-                rel_obj = self.get_object(instance)
-                remote_field = self.field.remote_field
-                # If this is a one-to-one relation, set the reverse accessor
-                # cache on the related object to the current instance to avoid
-                # an extra SQL query if it's accessed later on.
-                if not remote_field.multiple:
-                    remote_field.set_cached_value(rel_obj, instance)
+                get_fetch_mode()(self, instance)
+                return self.field.get_cached_value(instance)
+
             self.field.set_cached_value(instance, rel_obj)
 
         if rel_obj is None and not self.field.null:
@@ -259,6 +256,20 @@ class ForwardManyToOneDescriptor:
             )
         else:
             return rel_obj
+
+    def fetch_one(self, instance):
+        rel_obj = self.get_object(instance)
+        self.field.set_cached_value(instance, rel_obj)
+        # If this is a one-to-one relation, set the reverse accessor cache on
+        # the related object to the current instance to avoid an extra SQL
+        # query if it's accessed later on.
+        remote_field = self.field.remote_field
+        if not remote_field.multiple:
+            remote_field.set_cached_value(rel_obj, instance)
+
+    def fetch_many(self, instances):
+        missing_instances = [i for i in instances if not self.is_cached(i)]
+        prefetch_related_objects(missing_instances, self.field.name)
 
     def __set__(self, instance, value):
         """
@@ -496,16 +507,8 @@ class ReverseOneToOneDescriptor:
             if not instance._is_pk_set():
                 rel_obj = None
             else:
-                filter_args = self.related.field.get_forward_related_filter(instance)
-                try:
-                    rel_obj = self.get_queryset(instance=instance).get(**filter_args)
-                except self.related.related_model.DoesNotExist:
-                    rel_obj = None
-                else:
-                    # Set the forward accessor cache on the related object to
-                    # the current instance to avoid an extra SQL query if it's
-                    # accessed later on.
-                    self.related.field.set_cached_value(rel_obj, instance)
+                get_fetch_mode()(self, instance)
+                rel_obj = self.related.get_cached_value(instance)
             self.related.set_cached_value(instance, rel_obj)
 
         if rel_obj is None:
@@ -515,6 +518,25 @@ class ReverseOneToOneDescriptor:
             )
         else:
             return rel_obj
+
+    def fetch_one(self, instance):
+        # Kept for backwards compatibility with overridden
+        # get_forward_related_filter()
+        filter_args = self.related.field.get_forward_related_filter(instance)
+        try:
+            rel_obj = self.get_queryset(instance=instance).get(**filter_args)
+        except self.related.related_model.DoesNotExist:
+            rel_obj = None
+        else:
+            self.related.field.set_cached_value(rel_obj, instance)
+        self.related.set_cached_value(instance, rel_obj)
+
+    def fetch_many(self, instances):
+        missing_instances = [i for i in instances if not self.is_cached(i)]
+        prefetch_related_objects(
+            missing_instances,
+            self.related.get_accessor_name(),
+        )
 
     def __set__(self, instance, value):
         """

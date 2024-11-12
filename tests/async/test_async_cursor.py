@@ -11,6 +11,17 @@ class AsyncCursorTests(SimpleTestCase):
             async with conn.acursor() as cursor:
                 await cursor.aexecute("SELECT 1")
 
+    async def test_aexecutemany(self):
+        async with new_connection() as conn:
+            async with conn.acursor() as cursor:
+                await cursor.aexecute("CREATE TABLE numbers (number SMALLINT)")
+                await cursor.aexecutemany(
+                    "INSERT INTO numbers VALUES (%s)", [(1,), (2,), (3,)]
+                )
+                await cursor.aexecute("SELECT * FROM numbers")
+                result = await cursor.afetchall()
+                self.assertEqual(result, [(1,), (2,), (3,)])
+
     async def test_afetchone(self):
         async with new_connection() as conn:
             async with conn.acursor() as cursor:

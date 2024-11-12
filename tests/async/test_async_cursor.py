@@ -25,9 +25,9 @@ class AsyncCursorTests(SimpleTestCase):
                     """
                     SELECT *
                     FROM (VALUES
-                            ('BANANA'),
-                            ('STRAWBERRY'),
-                            ('MELON')
+                        ('BANANA'),
+                        ('STRAWBERRY'),
+                        ('MELON')
                     ) AS v (NAME)"""
                 )
                 result = await cursor.afetchmany(size=2)
@@ -40,10 +40,83 @@ class AsyncCursorTests(SimpleTestCase):
                     """
                     SELECT *
                     FROM (VALUES
-                            ('BANANA'),
-                            ('STRAWBERRY'),
-                            ('MELON')
+                        ('BANANA'),
+                        ('STRAWBERRY'),
+                        ('MELON')
                     ) AS v (NAME)"""
                 )
                 result = await cursor.afetchall()
             self.assertEqual(result, [("BANANA",), ("STRAWBERRY",), ("MELON",)])
+
+    async def test_aiter(self):
+        result = []
+        async with new_connection() as conn:
+            async with conn.acursor() as cursor:
+                await cursor.aexecute(
+                    """
+                    SELECT *
+                    FROM (VALUES
+                        ('BANANA'),
+                        ('STRAWBERRY'),
+                        ('MELON')
+                    ) AS v (NAME)"""
+                )
+                async for record in cursor:
+                    result.append(record)
+            self.assertEqual(result, [("BANANA",), ("STRAWBERRY",), ("MELON",)])
+
+    async def test_acopy(self):
+        result = []
+        async with new_connection() as conn:
+            async with conn.acursor() as cursor:
+                async with cursor.acopy(
+                    """
+                    COPY (
+                        SELECT *
+                        FROM (VALUES
+                            ('BANANA'),
+                            ('STRAWBERRY'),
+                            ('MELON')
+                        ) AS v (NAME)
+                    ) TO STDOUT"""
+                ) as copy:
+                    async for row in copy.rows():
+                        result.append(row)
+            self.assertEqual(result, [("BANANA",), ("STRAWBERRY",), ("MELON",)])
+
+    async def test_astream(self):
+        result = []
+        async with new_connection() as conn:
+            async with conn.acursor() as cursor:
+                async for record in cursor.astream(
+                    """
+                    SELECT *
+                    FROM (VALUES
+                        ('BANANA'),
+                        ('STRAWBERRY'),
+                        ('MELON')
+                    ) AS v (NAME)"""
+                ):
+                    result.append(record)
+            self.assertEqual(result, [("BANANA",), ("STRAWBERRY",), ("MELON",)])
+
+    async def test_ascroll(self):
+        result = []
+        async with new_connection() as conn:
+            async with conn.acursor() as cursor:
+                await cursor.aexecute(
+                    """
+                    SELECT *
+                    FROM (VALUES
+                        ('BANANA'),
+                        ('STRAWBERRY'),
+                        ('MELON')
+                    ) AS v (NAME)"""
+                )
+                await cursor.ascroll(1, "absolute")
+
+                result = await cursor.afetchall()
+                self.assertEqual(result, [("STRAWBERRY",), ("MELON",)])
+                await cursor.ascroll(0, "absolute")
+                result = await cursor.afetchall()
+                self.assertEqual(result, [("BANANA",), ("STRAWBERRY",), ("MELON",)])

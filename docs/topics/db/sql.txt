@@ -430,6 +430,10 @@ Async cursors provide the following methods:
 * ``.astream()``
 * ``.ascroll()``
 
+Currently, Django ships with the following async-enabled backend:
+
+* `django.db.backends.postgresql` with `psycopg3`.
+
 Calling stored procedures
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

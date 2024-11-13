@@ -273,7 +273,7 @@ class AsyncConnectionHandler:
         alias = self[using]
         if len(alias.connections) == 0:
             raise ConnectionDoesNotExist(
-                f"There are no connections using the '{using}' alias."
+                f"There are no async connections using the '{using}' alias."
             )
         return alias.connections[-1]
 

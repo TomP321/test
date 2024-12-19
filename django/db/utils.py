@@ -219,7 +219,7 @@ class AsyncAlias:
         return ", ".join([str(id(conn)) for conn in self.connections])
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}: {self}>"
+        return f"<{self.__class__.__name__}: {len(self.connections)} connections>"
 
     def add_connection(self, connection):
         setattr(self._connections, "_stack", self.connections + [connection])
@@ -251,7 +251,7 @@ class AsyncConnectionHandler:
         return async_alias
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self}>"
+        return f"<{self.__class__.__name__}: {self.count} connections>"
 
     @property
     def count(self):

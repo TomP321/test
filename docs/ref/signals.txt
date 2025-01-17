@@ -707,6 +707,8 @@ Arguments sent with this signal:
 Tasks signals
 =============
 
+.. versionadded:: 6.0
+
 Signals sent by the :doc:`tasks </ref/tasks>` framework.
 
 .. data:: django.tasks.signals.task_enqueued

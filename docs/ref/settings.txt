@@ -2650,7 +2650,9 @@ backend definition in :setting:`STORAGES`.
 .. setting:: TASKS
 
 ``TASKS``
-----------
+---------
+
+.. versionadded:: 6.0
 
 Default::
 

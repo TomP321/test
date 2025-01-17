@@ -2,6 +2,8 @@
 Django's tasks framework
 ========================
 
+.. versionadded:: 6.0
+
 For a web application, there's often more than just turning HTTP requests into
 HTTP responses. For some functionality, it may be beneficial to run code outside
 of the request-response cycle.

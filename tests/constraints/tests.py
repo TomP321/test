@@ -7,8 +7,6 @@ from django.db.models.constraints import BaseConstraint, UniqueConstraint
 from django.db.models.functions import Abs, Lower, Sqrt, Upper
 from django.db.transaction import atomic
 from django.test import SimpleTestCase, TestCase, skipIfDBFeature, skipUnlessDBFeature
-from django.test.utils import ignore_warnings
-from django.utils.deprecation import RemovedInDjango60Warning
 
 from .models import (
     ChildModel,
@@ -103,22 +101,12 @@ class BaseConstraintTests(SimpleTestCase):
             },
         )
 
-    def test_deprecation(self):
-        msg = "Passing positional arguments to BaseConstraint is deprecated."
-        with self.assertRaisesMessage(RemovedInDjango60Warning, msg):
-            BaseConstraint("name", "violation error message")
-
     def test_name_required(self):
         msg = (
             "BaseConstraint.__init__() missing 1 required keyword-only argument: 'name'"
         )
         with self.assertRaisesMessage(TypeError, msg):
             BaseConstraint()
-
-    @ignore_warnings(category=RemovedInDjango60Warning)
-    def test_positional_arguments(self):
-        c = BaseConstraint("name", "custom %(name)s message")
-        self.assertEqual(c.get_violation_error_message(), "custom name message")
 
 
 class CheckConstraintTests(TestCase):
@@ -408,23 +396,6 @@ class CheckConstraintTests(TestCase):
         # Excluding referenced or generated fields should skip validation.
         constraint.validate(model, invalid_product, exclude={"price"})
         constraint.validate(model, invalid_product, exclude={"rebate"})
-
-    def test_check_deprecation(self):
-        msg = "CheckConstraint.check is deprecated in favor of `.condition`."
-        condition = models.Q(foo="bar")
-        with self.assertWarnsMessage(RemovedInDjango60Warning, msg) as ctx:
-            constraint = models.CheckConstraint(name="constraint", check=condition)
-        self.assertEqual(ctx.filename, __file__)
-        with self.assertWarnsMessage(RemovedInDjango60Warning, msg) as ctx:
-            self.assertIs(constraint.check, condition)
-        self.assertEqual(ctx.filename, __file__)
-        other_condition = models.Q(something="else")
-        with self.assertWarnsMessage(RemovedInDjango60Warning, msg) as ctx:
-            constraint.check = other_condition
-        self.assertEqual(ctx.filename, __file__)
-        with self.assertWarnsMessage(RemovedInDjango60Warning, msg) as ctx:
-            self.assertIs(constraint.check, other_condition)
-        self.assertEqual(ctx.filename, __file__)
 
     def test_database_default(self):
         models.CheckConstraint(
@@ -952,6 +923,41 @@ class UniqueConstraintTests(TestCase):
                 UniqueConstraintProduct,
                 ChildUniqueConstraintProduct(name=self.p1.name, color=self.p1.color),
             )
+
+    def test_validate_unique_custom_code_and_message(self):
+        product = UniqueConstraintProduct.objects.create(
+            name="test", color="red", age=42
+        )
+        code = "custom_code"
+        message = "Custom message"
+        multiple_fields_constraint = models.UniqueConstraint(
+            fields=["color", "age"],
+            name="color_age_uniq",
+            violation_error_code=code,
+            violation_error_message=message,
+        )
+        single_field_constraint = models.UniqueConstraint(
+            fields=["color"],
+            name="color_uniq",
+            violation_error_code=code,
+            violation_error_message=message,
+        )
+
+        with self.assertRaisesMessage(ValidationError, message) as cm:
+            multiple_fields_constraint.validate(
+                UniqueConstraintProduct,
+                UniqueConstraintProduct(
+                    name="new-test", color=product.color, age=product.age
+                ),
+            )
+        self.assertEqual(cm.exception.code, code)
+
+        with self.assertRaisesMessage(ValidationError, message) as cm:
+            single_field_constraint.validate(
+                UniqueConstraintProduct,
+                UniqueConstraintProduct(name="new-test", color=product.color),
+            )
+        self.assertEqual(cm.exception.code, code)
 
     @skipUnlessDBFeature("supports_table_check_constraints")
     def test_validate_fields_unattached(self):

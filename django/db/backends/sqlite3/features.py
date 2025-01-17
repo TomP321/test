@@ -101,7 +101,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
                         "servers.tests.LiveServerTestCloseConnectionTest."
                         "test_closes_connections",
                     },
-                    "For SQLite in-memory tests, closing the connection destroys"
+                    "For SQLite in-memory tests, closing the connection destroys "
                     "the database.": {
                         "test_utils.tests.AssertNumQueriesUponConnectionTests."
                         "test_ignores_connection_configuration_queries",
@@ -120,6 +120,16 @@ class DatabaseFeatures(BaseDatabaseFeatures):
                     "SQLite databases": {
                         "backends.sqlite.test_creation.TestDbSignatureTests."
                         "test_get_test_db_clone_settings_not_supported",
+                    },
+                }
+            )
+        if Database.sqlite_version_info < (3, 47):
+            skips.update(
+                {
+                    "SQLite does not parse escaped double quotes in the JSON path "
+                    "notation": {
+                        "model_fields.test_jsonfield.TestQuerying."
+                        "test_lookups_special_chars_double_quotes",
                     },
                 }
             )

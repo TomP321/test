@@ -78,7 +78,6 @@ class BaseTaskBackend(metaclass=ABCMeta):
         """
         Queue up a task to be executed
         """
-        ...
 
     async def aenqueue(self, task, args, kwargs):
         """

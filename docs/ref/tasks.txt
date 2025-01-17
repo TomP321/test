@@ -12,7 +12,7 @@ Task definition
 
 .. function:: task
 
-A decorator defining a :class:`Task`::
+A decorator that defines a :class:`Task`::
 
     from django.tasks import task
 
@@ -30,55 +30,62 @@ In the above example, ``calculate_meaning_of_life`` is a :class:`Task` instance.
 * :attr:`queue_name <Task.queue_name>`
 * :attr:`enqueue_on_commit <Task.enqueue_on_commit>`
 
-If the Task is not valid, according to the backend,
+If the ``Task`` is not valid, according to the backend,
 :exc:`django.tasks.exceptions.InvalidTaskError` is raised.
 
 .. class:: Task
 
-An class representing a Task to be run in the background. Tasks should be
-defined using the :func:`task` decorator.
+Represents a task to be run in the background. Tasks should be defined using
+the :func:`task` decorator.
 
 Attributes of ``Task`` cannot be modified.
 
 .. attribute:: Task.priority
 
-    The priority of the Task. Priorities must be between -100 and 100, where
-    larger numbers are higher priority, and will be run sooner.
-
-    By default, Tasks are enqueued with a priority of 0.
+    The priority of the ``Task``. Priorities must be between -100 and 100,
+    where larger numbers are higher priority, and will be run sooner. Defaults
+    to 0.
 
 .. attribute:: Task.backend
 
-    The alias of the backend the Task should be enqueued to.
+    The alias of the backend the ``Task`` should be enqueued to. Defaults
+    to ``"default"``.
+
+    This must match a backend defined in :setting:`BACKEND <TASKS-BACKEND>`.
 
 .. attribute:: Task.queue_name
 
-    The name of the queue the Task will be enqueued on to. Defaults to
+    The name of the queue the ``Task`` will be enqueued on to. Defaults to
     ``"default"``.
 
     This must match a queue defined in :setting:`QUEUES <TASKS-QUEUES>`.
 
 .. attribute:: Task.run_after
 
-    The earliest time the Task will be executed, or ``None`` to have no time set.
+    The earliest time the ``Task`` will be executed, or ``None`` to have no time set.
+
+    Defaults to ``None``.
 
 .. attribute:: Task.enqueue_on_commit
 
-    Whether the Task should be enqueued when the transaction commits successfully,
-    or immediately.
+    Whether the ``Task`` should be enqueued when the :ref:`<transaction <task_transactions>`
+    commits successfully, or immediately.
 
     By default, the behavior of the backend's
     :setting:`ENQUEUE_ON_COMMIT <TASKS-ENQUEUE_ON_COMMIT>` is used.
 
 .. attribute:: Task.name
 
-    An identifier for a Task. Potentially useful for debugging.
+    An identifier for a ``Task``. Potentially useful for debugging.
 
     A Task's name is not necessarily unique.
 
+    By default, this is is the name of the function decorated with :func:`task`.
+
 .. method:: Task.using()
 
-    Create a new Task with modified defaults. The existing Task is left unchanged.
+    Creates a new ``Task`` with modified defaults. The existing ``Task`` is
+    left unchanged.
 
     ``using`` allows modifying the following attributes:
 
@@ -89,11 +96,11 @@ Attributes of ``Task`` cannot be modified.
 
 .. method:: Task.enqueue(*args, **kwargs)
 
-    Enqueue the Task for later execution.
+    Enqueues the ``Task`` for later execution.
 
     Arguments and keyword arguments are passed to the Task's function as-is.
 
-    If the Task is not valid, according to the backend,
+    If the ``Task`` is not valid, according to the backend,
     :exc:`django.tasks.exceptions.InvalidTaskError` is raised.
 
 .. method:: Task.aenqueue(*args, **kwargs)
@@ -102,8 +109,8 @@ Attributes of ``Task`` cannot be modified.
 
 .. method:: Task.get_result(result_id)
 
-    Retrieve a result by its id. If the result does not exist, or is not the same
-    type as the current Task,
+    Retrieves a result by its id. If the result does not exist, or is not the same
+    type as the current ``Task``,
     :exc:`ResultDoesNotExist <django.tasks.exceptions.ResultDoesNotExist>`
     is raised.
 
@@ -154,7 +161,7 @@ Attributes of ``TaskResult`` cannot be modified.
     A unique identifier for the result, which can be passed to
     :meth:`Task.get_result`.
 
-    The format of a Task result id will depend on the backend being used.
+    The format of a ``Task`` result id will depend on the backend being used.
     Some may use numbers, others UUIDs.
     Task ids are always strings less than 64 characters.
 
@@ -164,18 +171,18 @@ Attributes of ``TaskResult`` cannot be modified.
 
 .. attribute:: TaskResult.enqueued_at
 
-    The time when the Task was enqueued.
+    The time when the ``Task`` was enqueued.
 
     If :attr:`Task.enqueue_on_commit` was set, this is the time the transaction
     completed.
 
 .. attribute:: TaskResult.started_at
 
-    The time when the Task began execution.
+    The time when the ``Task`` began execution.
 
 .. attribute:: TaskResult.finished_at
 
-    The time when the Task finished execution, whether it failed or succeeded.
+    The time when the ``Task`` finished execution, whether it failed or succeeded.
 
 .. attribute:: TaskResult.backend
 
@@ -183,23 +190,23 @@ Attributes of ``TaskResult`` cannot be modified.
 
 .. attribute:: TaskResult.exception_class
 
-    The exception class raised when executing the Task.
+    The exception class raised when executing the ``Task``.
 
-    If the Task has not finished, ``ValueError`` is raised. If the Task finished
+    If the ``Task`` has not finished, ``ValueError`` is raised. If the ``Task`` finished
     successfully, the exception class is ``None``.
 
 .. attribute:: TaskResult.traceback
 
-    The exception traceback from the raised exception when the Task failed.
+    The exception traceback from the raised exception when the ``Task`` failed.
 
-    If the Task has not finished, ``ValueError`` is raised. If the Task finished
+    If the Task has not finished, ``ValueError`` is raised. If the ``Task`` finished
     successfully, the traceback is ``None``.
 
 .. attribute:: TaskResult.return_value
 
-    The return value from the Task function.
+    The return value from the ``Task`` function.
 
-    If the Task did not finish successfully, :exc:`ValueError` is raised.
+    If the ``Task`` did not finish successfully, :exc:`ValueError` is raised.
 
 .. method:: TaskResult.refresh
 
@@ -211,7 +218,7 @@ Attributes of ``TaskResult`` cannot be modified.
 
 .. attribute:: TaskResult.is_finished
 
-    Whether the Task has finished (successfully or not).
+    Whether the ``Task`` has finished (successfully or not).
 
 Backends
 ========
@@ -237,37 +244,6 @@ Base backend
 .. method:: BaseTaskBackend.aget_result(result_id)
 
     The ``async`` variant of :meth:`BaseTaskBackend.get_result`.
-
-Features
-~~~~~~~~
-
-Some backends may not support all features Django provides. It's possible to
-identifying the supported functionality of a backend, and potentially
-changing behavior accordingly.
-
-.. attribute:: BaseTaskBackend.supports_defer
-
-    Whether the backend supports enqueueing Tasks to be
-    executed after a specific time using the ``run_after`` attribute.
-
-.. attribute:: BaseTaskBackend.supports_async_task
-
-    Whether the backend supports enqueueing async functions (coroutines).
-
-.. attribute:: BaseTaskBackend.supports_get_result
-
-    Whether the backend supports retrieving Task results from another thread
-    after they have been enqueued.
-
-The below table notes which backends support which features:
-
-======================= ================ ====================
-Feature                 ``DummyBackend`` ``ImmediateBackend``
-======================= ================ ====================
-``supports_defer``      Yes              No
-``supports_async_task`` Yes              Yes
-``supports_get_result`` No               No [#fimmediateresult]_
-======================= ================ ====================
 
 Available backends
 ------------------
@@ -298,6 +274,37 @@ for later use.
 .. method:: DummyBackend.clear
 
     Clears the list of stored results.
+
+Feature flags
+-------------
+
+Some backends may not support all features Django provides. It's possible to
+identify the supported functionality of a backend, and potentially change
+behavior accordingly.
+
+.. attribute:: BaseTaskBackend.supports_defer
+
+    Whether the backend supports enqueueing Tasks to be
+    executed after a specific time using the ``run_after`` attribute.
+
+.. attribute:: BaseTaskBackend.supports_async_task
+
+    Whether the backend supports enqueueing async functions (coroutines).
+
+.. attribute:: BaseTaskBackend.supports_get_result
+
+    Whether the backend supports retrieving ``Task`` results from another thread
+    after they have been enqueued.
+
+The below table notes which backends support which features:
+
+======================= ================ ====================
+Feature                 ``DummyBackend`` ``ImmediateBackend``
+======================= ================ ====================
+``supports_defer``      Yes              No
+``supports_async_task`` Yes              Yes
+``supports_get_result`` No               No [#fimmediateresult]_
+======================= ================ ====================
 
 Exceptions
 ==========

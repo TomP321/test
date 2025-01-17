@@ -2701,7 +2701,7 @@ This can also be configured on a per-task basis.
 .. setting:: TASKS-QUEUES
 
 ``QUEUES``
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 Default: ``["default"]``
 

@@ -35,14 +35,12 @@ class BaseTaskBackend(metaclass=ABCMeta):
 
         If the task defines it, use that, otherwise, fall back to the backend.
         """
-        # If this project doesn't use a database, there's nothing to commit to
-        if not connections.settings:
-            return False
-
-        if task.enqueue_on_commit is not None:
-            return task.enqueue_on_commit
-
-        return self.enqueue_on_commit
+        # If the task defines it, use that, otherwise, fall back to the backend.
+        return (
+            task.enqueue_on_commit
+            if task.enqueue_on_commit is not None
+            else self.enqueue_on_commit
+        )
 
     def validate_task(self, task):
         """
@@ -109,8 +107,7 @@ class BaseTaskBackend(metaclass=ABCMeta):
 
     def check(self, **kwargs):
         if self.enqueue_on_commit and not connections.settings:
-            yield messages.CheckMessage(
-                messages.ERROR,
+            yield messages.Error(
                 "`ENQUEUE_ON_COMMIT` cannot be used when no databases are configured",
                 hint="Set `ENQUEUE_ON_COMMIT` to False",
             )

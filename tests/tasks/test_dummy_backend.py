@@ -1,9 +1,10 @@
 from typing import cast
+from unittest import mock
 
 from django.db import transaction
 from django.tasks import ResultStatus, default_task_backend, tasks
 from django.tasks.backends.dummy import DummyBackend
-from django.tasks.exceptions import ResultDoesNotExist
+from django.tasks.exceptions import InvalidTaskError, ResultDoesNotExist
 from django.tasks.task import Task
 from django.test import SimpleTestCase, TransactionTestCase, override_settings
 
@@ -128,6 +129,13 @@ class DummyBackendTestCase(SimpleTestCase):
 
         with self.assertRaisesMessage(ValueError, "Task has not finished yet"):
             result.traceback
+
+    def test_validate_disallowed_async_task(self):
+        with mock.patch.multiple(default_task_backend, supports_async_task=False):
+            with self.assertRaisesMessage(
+                InvalidTaskError, "Backend does not support async tasks"
+            ):
+                default_task_backend.validate_task(test_tasks.noop_task_async)
 
 
 class DummyBackendTransactionTestCase(TransactionTestCase):

@@ -245,6 +245,38 @@ Base backend
 
     The ``async`` variant of :meth:`BaseTaskBackend.get_result`.
 
+Feature flags
+~~~~~~~~~~~~~
+
+Some backends may not support all features Django provides. It's possible to
+identify the supported functionality of a backend, and potentially change
+behavior accordingly.
+
+.. attribute:: BaseTaskBackend.supports_defer
+
+    Whether the backend supports enqueueing Tasks to be
+    executed after a specific time using the ``run_after`` attribute.
+
+.. attribute:: BaseTaskBackend.supports_async_task
+
+    Whether the backend supports enqueueing async functions (coroutines).
+
+.. attribute:: BaseTaskBackend.supports_get_result
+
+    Whether the backend supports retrieving ``Task`` results from another thread
+    after they have been enqueued.
+
+The below table notes which backends support which features:
+
+======================= ================ ====================
+Feature                 ``DummyBackend`` ``ImmediateBackend``
+======================= ================ ====================
+``supports_defer``      Yes              No
+``supports_async_task`` Yes              Yes
+``supports_get_result`` No               No [#fimmediateresult]_
+======================= ================ ====================
+
+
 Available backends
 ------------------
 
@@ -274,37 +306,6 @@ for later use.
 .. method:: DummyBackend.clear
 
     Clears the list of stored results.
-
-Feature flags
--------------
-
-Some backends may not support all features Django provides. It's possible to
-identify the supported functionality of a backend, and potentially change
-behavior accordingly.
-
-.. attribute:: BaseTaskBackend.supports_defer
-
-    Whether the backend supports enqueueing Tasks to be
-    executed after a specific time using the ``run_after`` attribute.
-
-.. attribute:: BaseTaskBackend.supports_async_task
-
-    Whether the backend supports enqueueing async functions (coroutines).
-
-.. attribute:: BaseTaskBackend.supports_get_result
-
-    Whether the backend supports retrieving ``Task`` results from another thread
-    after they have been enqueued.
-
-The below table notes which backends support which features:
-
-======================= ================ ====================
-Feature                 ``DummyBackend`` ``ImmediateBackend``
-======================= ================ ====================
-``supports_defer``      Yes              No
-``supports_async_task`` Yes              Yes
-``supports_get_result`` No               No [#fimmediateresult]_
-======================= ================ ====================
 
 Exceptions
 ==========

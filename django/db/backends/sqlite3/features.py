@@ -35,6 +35,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_frame_exclusion = True
     supports_aggregate_filter_clause = True
     order_by_nulls_first = True
+    supports_json_absent_on_null = False
     supports_json_field_contains = False
     supports_update_conflicts = True
     supports_update_conflicts_with_target = True

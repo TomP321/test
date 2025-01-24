@@ -14,14 +14,17 @@ Task definition
 
 A decorator that defines a :class:`Task`::
 
+    from django.core.mail import send_mail
     from django.tasks import task
 
 
     @task
-    def calculate_meaning_of_life() -> int:
-        return 42
+    def email_users(emails, subject, message) -> int:
+        return send_mail(
+            subject=subject, message=message, from_email=None, recipient_list=emails
+        )
 
-In the above example, ``calculate_meaning_of_life`` is a :class:`Task` instance.
+In the above example, ``email_users`` is a :class:`Task` instance.
 
 ``task`` accepts a number of arguments, which are used as-is for the ``Task``:
 

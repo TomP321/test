@@ -12,7 +12,8 @@ That's where background tasks come in.
 
 Background tasks can offload complexity outside of the request-response cycle,
 to be run somewhere else, potentially at a later date. This keeps requests fast,
-latency down, and improves the user's experience.
+latency down, and improves the user's experience. For example, a user shouldn't
+need to wait for an email to send before their response returns.
 
 Background task fundamentals
 ============================
@@ -181,14 +182,18 @@ Defining tasks
 Tasks are defined using the :meth:`django.tasks.task` decorator on a
 module-level function::
 
+    from django.core.mail import send_mail
     from django.tasks import task
 
 
-    @task()
-    def calculate_meaning_of_life(answer=42):
-        return answer
+    @task
+    def email_users(emails, subject, message) -> int:
+        return send_mail(
+            subject=subject, message=message, from_email=None, recipient_list=emails
+        )
 
-The return value is a :class:`django.tasks.Task` instance.
+
+The return value of the decorator is a :class:`django.tasks.Task` instance.
 
 .. note::
 
@@ -227,9 +232,9 @@ A ``Task`` instance cannot be modified directly. Instead, a modified instance
 can be created with the :meth:`using <django.tasks.Task.using>` method, leaving
 the original as-is::
 
-    calculate_meaning_of_life.priority  # 0
+    email_users.priority  # 0
 
-    calculate_meaning_of_life.using(priority=10).priority  # 10
+    email_users.using(priority=10).priority  # 10
 
 ``using`` allows modifying the following attributes:
 
@@ -246,16 +251,16 @@ Enqueueing Tasks
 ================
 
 To add the Task to the queue store, so it will be executed, call the ``enqueue``
-method on it::
+method on it. If the task takes arguments, these can be passed as-is::
 
-    result = calculate_meaning_of_life.enqueue()
+    result = email_users.enqueue(
+        emails=["user@example.com"],
+        subject="You have a message",
+        message="Hello there!",
+    )
 
 Returned is a :class:`django.tasks.TaskResult`, which can be used to retrieve
 the result of the task once it has finished executing.
-
-If the task takes arguments, these can be passed as-is to ``enqueue``::
-
-    result = calculate_meaning_of_life.enqueue(answer=42)
 
 To enqueue tasks in an ``async`` context, :meth:`aenqueue <django.tasks.Task.aenqueue>`
 is available as an ``async`` variant of ``enqueue``.
@@ -307,10 +312,10 @@ The :meth:`django.tasks.Task.get_result` method can retrieve a result based on
 its ``id``::
 
     # Later, somewhere else...
-    result = calculate_meaning_of_life.get_result(result_id)
+    result = email_users.get_result(result_id)
 
 If the ``TaskResult`` exists, it is returned. If it doesn't exist, or isn't a
-result for ``calculate_meaning_of_life``, :exc:`django.tasks.exceptions.ResultDoesNotExist`
+result for ``email_users``, :exc:`django.tasks.exceptions.ResultDoesNotExist`
 is raised.
 
 To retrieve a ``TaskResult``, regardless of which kind of ``Task`` it was from,

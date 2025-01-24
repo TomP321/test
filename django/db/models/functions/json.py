@@ -6,7 +6,55 @@ from django.db.models.functions import Cast
 from django.db.models.lookups import IsNull
 
 
+class _JSONArrayConcat(Func):
+    # Concatenate multiple JSON arrays into a single JSON array.
+    # If any value is NULL, the entire array is NULL.
+    # Duplicates are preserved.
+    # This function cannot take objects because the behavior is backend dependent.
+    # For example, on MySQL the merge is recursive, but on PostgreSQL
+    # it is not.
+
+    function = None
+    output_field = JSONField()
+
+    def __init__(self, *expressions, **extra):
+        if len(expressions) < 2:
+            raise ValueError("_JSONArrayConcat must take at least two expressions")
+        super().__init__(*expressions, **extra)
+
+    def as_sql(self, compiler, connection, **extra_context):
+        if not connection.features.supports_json_array_concat:
+            raise NotSupportedError(
+                "Concatenating JSON arrays is not supported on this database backend."
+            )
+        return super().as_sql(compiler, connection, **extra_context)
+
+    def pipes_concat_sql(self, compiler, connection, **extra_context):
+        return super().as_sql(
+            compiler,
+            connection,
+            template="(%(expressions)s)",
+            arg_joiner=" || ",
+            **extra_context,
+        )
+
+    def as_mysql(self, compiler, connection, **extra_context):
+        return super().as_sql(
+            compiler,
+            connection,
+            function="JSON_MERGE_PRESERVE",
+            **extra_context,
+        )
+
+    def as_oracle(self, compiler, connection, **extra_context):
+        return self.pipes_concat_sql(compiler, connection, **extra_context)
+
+    def as_postgresql(self, compiler, connection, **extra_context):
+        return self.pipes_concat_sql(compiler, connection, **extra_context)
+
+
 class JSONArray(Func):
+
     function = "JSON_ARRAY"
     output_field = JSONField()
 
@@ -14,7 +62,7 @@ class JSONArray(Func):
         self.absent_on_null = absent_on_null
         super().__init__(*expressions)
 
-    def _absent_on_null_workaround(self, *, compiler, connection, **kwargs):
+    def _absent_on_null_workaround(self, compiler):
         # On backends that do not support ABSENT ON NULL, we can implement the behavior
         # so long as the backend has a way to concatenate JSON arrays.
         unit_arrays = [
@@ -26,24 +74,13 @@ class JSONArray(Func):
         ]
 
         if len(unit_arrays) == 0:
-            return super().as_sql(
-                compiler,
-                connection,
-            )
+            expression = JSONArray()
+        elif len(unit_arrays) == 1:
+            expression = unit_arrays[0]
+        else:
+            expression = _JSONArrayConcat(*unit_arrays)
 
-        if len(unit_arrays) == 1:
-            return unit_arrays[0].as_sql(
-                compiler,
-                connection,
-            )
-
-        return Func(
-            *unit_arrays,
-        ).as_sql(
-            compiler,
-            connection,
-            **kwargs,
-        )
+        return compiler.compile(expression)
 
     def as_sql(self, compiler, connection, **extra_context):
         if not connection.features.supports_json_field:
@@ -58,11 +95,7 @@ class JSONArray(Func):
 
     def as_mysql(self, compiler, connection, **extra_context):
         if self.absent_on_null:
-            return self._absent_on_null_workaround(
-                compiler=compiler,
-                connection=connection,
-                function="JSON_MERGE_PRESERVE",
-            )
+            return self._absent_on_null_workaround(compiler)
 
         return super().as_sql(compiler, connection, **extra_context)
 
@@ -108,12 +141,7 @@ class JSONArray(Func):
             )
 
         if self.absent_on_null:
-            return casted_obj._absent_on_null_workaround(
-                compiler=compiler,
-                connection=connection,
-                template="(%(expressions)s)",
-                arg_joiner=" || ",
-            )
+            return casted_obj._absent_on_null_workaround(compiler)
 
         return casted_obj.as_sql(
             compiler,

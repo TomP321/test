@@ -40,6 +40,15 @@ class JSONArrayConcatTests(TestCase):
         ).first()
         self.assertEqual(obj.json, None)
 
+    def test_duplicates_preserved(self):
+        obj = Author.objects.annotate(
+            arr=JSONConcat(
+                JSONArray("name"),
+                JSONArray("name"),
+            )
+        ).first()
+        self.assertEqual(obj.arr, ["Ivan Ivanov", "Ivan Ivanov"])
+
 
 @skipIfDBFeature("has_json_object_function")
 class JSONArrayConcaNotSupportedTests(TestCase):

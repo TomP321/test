@@ -175,7 +175,9 @@ Migrations
 Models
 ~~~~~~
 
-* ...
+* The :class:`~django.db.models.functions.JSONArray` database function now
+  accepts an ``absent_on_null`` parameter to control whether ``null`` values
+  are omitted.
 
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~

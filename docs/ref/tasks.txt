@@ -269,16 +269,18 @@ behavior accordingly.
     Whether the backend supports retrieving ``Task`` results from another thread
     after they have been enqueued.
 
-The below table notes which backends support which features:
+The below table notes which of the :ref:`built-in backends
+<task-available-backends>` support which features:
 
-======================= ================ ====================
-Feature                 ``DummyBackend`` ``ImmediateBackend``
-======================= ================ ====================
-``supports_defer``      Yes              No
-``supports_async_task`` Yes              Yes
-``supports_get_result`` No               No [#fimmediateresult]_
-======================= ================ ====================
+============================ ====================== ==========================
+Feature                      :class:`.DummyBackend` :class:`.ImmediateBackend`
+============================ ====================== ==========================
+:attr:`.supports_defer`      Yes                    No
+:attr:`.supports_async_task` Yes                    Yes
+:attr:`.supports_get_result` No                     No [#fimmediateresult]_
+============================ ====================== ==========================
 
+.. _task-available-backends:
 
 Available backends
 ------------------
@@ -290,7 +292,8 @@ Immediate backend
 
 .. class:: ImmediateBackend
 
-The immediate backend executes Tasks immediately, rather than in the background.
+The :ref:`immediate backend <immediate-task-backend>` executes Tasks immediately,
+rather than in the background.
 
 Dummy backend
 ~~~~~~~~~~~~~
@@ -299,7 +302,7 @@ Dummy backend
 
 .. class:: DummyBackend
 
-The dummy backend doesn't execute enqueued Tasks at all, instead storing results
+The :ref:`dummy backend <dummy-task-backend>` doesn't execute enqueued Tasks at all, instead storing results
 for later use.
 
 .. attribute:: DummyBackend.results

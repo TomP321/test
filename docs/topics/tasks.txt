@@ -35,7 +35,8 @@ Configuring a Task backend
 The Task backend determines how and where tasks are stored for execution and how
 they are executed. Different task backends have different characteristics and
 configuration options, which may impact the performance and reliability of your
-application.
+application. Django comes with a number of :ref:`built-in backends
+<task-available-backends>`.
 
 Task backends are configured using the :setting:`TASKS` setting in your settings
 file. Whilst most applications will only need a single backend, multiple are

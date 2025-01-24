@@ -54,7 +54,6 @@ class _JSONArrayConcat(Func):
 
 
 class JSONArray(Func):
-
     function = "JSON_ARRAY"
     output_field = JSONField()
 

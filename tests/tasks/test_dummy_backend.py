@@ -2,6 +2,7 @@ from typing import cast
 from unittest import mock
 
 from django.db import transaction
+from django.db.utils import ConnectionHandler
 from django.tasks import ResultStatus, default_task_backend, tasks
 from django.tasks.backends.dummy import DummyBackend
 from django.tasks.exceptions import InvalidTaskError, ResultDoesNotExist
@@ -136,6 +137,26 @@ class DummyBackendTestCase(SimpleTestCase):
                 InvalidTaskError, "Backend does not support async tasks"
             ):
                 default_task_backend.validate_task(test_tasks.noop_task_async)
+
+    def test_check(self):
+        errors = list(default_task_backend.check())
+        self.assertEqual(len(errors), 0, errors)
+
+    @override_settings(
+        TASKS={
+            "default": {
+                "BACKEND": "django.tasks.backends.dummy.DummyBackend",
+                "ENQUEUE_ON_COMMIT": True,
+            }
+        }
+    )
+    @mock.patch("django.tasks.backends.base.connections", ConnectionHandler({}))
+    def test_enqueue_on_commit_with_no_databases(self):
+        errors = list(default_task_backend.check())
+        self.assertEqual(len(errors), 1)
+        self.assertIn(
+            "Set `ENQUEUE_ON_COMMIT` to False", errors[0].hint
+        )  # type:ignore[arg-type]
 
 
 class DummyBackendTransactionTestCase(TransactionTestCase):

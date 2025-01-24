@@ -105,7 +105,7 @@ class BaseTaskBackend(metaclass=ABCMeta):
         )
 
     def check(self, **kwargs):
-        if self.enqueue_on_commit and not connections.settings:
+        if self.enqueue_on_commit and not connections._settings:
             yield messages.Error(
                 "`ENQUEUE_ON_COMMIT` cannot be used when no databases are configured",
                 hint="Set `ENQUEUE_ON_COMMIT` to False",

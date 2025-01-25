@@ -175,7 +175,8 @@ Migrations
 Models
 ~~~~~~
 
-* ...
+* Added the ability to specify dynamic keys in
+  the :class:`~django.db.models.functions.JSONObject` database function.
 
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~

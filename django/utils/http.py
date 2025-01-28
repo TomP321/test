@@ -311,7 +311,7 @@ def escape_leading_slashes(url):
     return url
 
 
-def parse_header_parameters(line):
+def parse_header_parameters(line, limit=2):
     """
     Parse a Content-type like header.
     Return the main content-type and a dictionary of options.
@@ -325,6 +325,8 @@ def parse_header_parameters(line):
     for name, value in params:
         if not name:
             continue
+        if len(pdict) >= limit:
+            break
         if isinstance(value, tuple):
             value = collapse_rfc2231_value(value)
         pdict[name] = value

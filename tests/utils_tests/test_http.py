@@ -505,6 +505,58 @@ class ParseHeaderParameterTests(unittest.TestCase):
             parsed = parse_header_parameters(raw_line)
             self.assertEqual(parsed[1]["title"], expected_title)
 
+    def test_params_limitation(self):
+        test_data = (
+            (
+                "Content-Disposition: form-data",
+                ("content-disposition: form-data", {}),
+            ),
+            (
+                "Content-Disposition: form-data; ",
+                ("content-disposition: form-data", {}),
+            ),
+            (
+                'Content-Disposition: form-data; name="field2"',
+                ("content-disposition: form-data", {"name": "field2"}),
+            ),
+            (
+                'Content-Disposition: form-data; name="field2"; filename="example.txt"',
+                (
+                    "content-disposition: form-data",
+                    {"name": "field2", "filename": "example.txt"},
+                ),
+            ),
+            (
+                'Content-Disposition: form-data; name="field2"; '
+                'filename="example.txt"; unexpected="value"',
+                (
+                    "content-disposition: form-data",
+                    {"name": "field2", "filename": "example.txt"},
+                ),
+            ),
+            (
+                "Content-Disposition: form-data"
+                f'{"".join([f"; field{i}=value{i}" for i in range(1, 50)])}',
+                (
+                    "content-disposition: form-data",
+                    {"field1": "value1", "field2": "value2"},
+                ),
+            ),
+        )
+        for raw_line, expected_resp in test_data:
+            parsed = parse_header_parameters(raw_line)
+            self.assertEqual(parsed, expected_resp)
+
+        for params_count in range(0, 10):
+            fields = {f"field{i}": f"value{i}" for i in range(params_count)}
+            test_data = (
+                "Content-Disposition: form-data"
+                f'{"".join([f"; {k}={v}" for k, v in fields.items()])}'
+            )
+            expected_resp = ("content-disposition: form-data", fields)
+            parsed = parse_header_parameters(test_data, limit=params_count)
+            self.assertEqual(parsed, expected_resp)
+
 
 class ContentDispositionHeaderTests(unittest.TestCase):
     def test_basic(self):

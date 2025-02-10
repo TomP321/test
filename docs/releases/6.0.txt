@@ -272,7 +272,7 @@ Prior to Django 6.0, :doc:`custom lookups </ref/models/lookups>` and
 :ref:`expressions <writing-your-own-query-expressions>` implementing the ``as_sql``
 method (and their underlying parts ``process_lhs`` and ``process_rhs``) were
 permitted to return a sequence of params in either a list or a tuple. To
-address the interoperatibility problems that resulted, the second element of
+address the interoperability problems that resulted, the second element of
 ``as_sql``'s return should now be a ``tuple``::
 
   def as_sql(self, compiler, connection) -> tuple[str, tuple]: ...

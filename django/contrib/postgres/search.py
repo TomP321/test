@@ -430,9 +430,8 @@ class Lexeme(LexemeCombinable, Value):
         self.weight = weight
         super().__init__(value, output_field=output_field)
 
-    def as_sql(self, compiler, connection):
+    def process_rhs(self, compiler, connection):
         param = "'%s'" % psql_escape(self.value)
-        template = "%s"
 
         label = ""
         if self.prefix:
@@ -443,9 +442,12 @@ class Lexeme(LexemeCombinable, Value):
         if label:
             param = "{}:{}".format(param, label)
         if self.invert:
-            param = "!{}".format(param)
-        params = [param]
-        return template, params
+            param = f"!{param}"
+
+        return [param]
+
+    def as_sql(self, compiler, connection):
+        return "%s", self.process_rhs(compiler, connection)
 
     def __invert__(self):
         return type(self)(

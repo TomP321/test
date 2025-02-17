@@ -774,10 +774,6 @@ class SearchHeadlineTests(GrailTestData, PostgreSQLTestCase):
 
 
 class TestLexemes(GrailTestData, PostgreSQLTestCase):
-
-    def test_simple(self):
-        pass
-
     def test_and(self):
         searched = Line.objects.annotate(
             search=SearchVector("scene__setting", "dialogue"),

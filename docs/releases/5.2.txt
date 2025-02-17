@@ -470,6 +470,11 @@ Miscellaneous
   ``Max``, ``Min``, ``StdDev``, ``Sum``, and ``Variance``) now raise
   :exc:`TypeError` when called with an incorrect number of arguments.
 
+* The undocumented ``django.utils.http.parse_header_parameters()`` function was
+  refactored to leverage its implementation to the Python's
+  :py:class:`email.message.Message` class. Parameter ``limit`` was added with
+  default value 2 to limit the number of semicolons provided.
+
 .. _deprecated-features-5.2:
 
 Features deprecated in 5.2

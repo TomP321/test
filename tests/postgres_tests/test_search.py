@@ -879,6 +879,7 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
             (Lexeme("triple quo'''te"), "%s", ["'triple quo te'"]),
             (Lexeme("backslash\\"), "%s", ["'backslash'"]),
             (Lexeme("exclamation!"), "%s", ["'exclamation'"]),
+            (Lexeme("ampers&nd"), "%s", ["'ampers nd'"]),
         )
         for expression, expected_sql, expected_params in tests:
             with self.subTest(expression=expression):

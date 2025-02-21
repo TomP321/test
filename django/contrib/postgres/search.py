@@ -444,10 +444,10 @@ class Lexeme(LexemeCombinable, Value):
         if self.invert:
             param = f"!{param}"
 
-        return [param]
+        return "%s", [param]
 
     def as_sql(self, compiler, connection):
-        return "%s", self.process_rhs(compiler, connection)
+        return self.process_rhs(compiler, connection)
 
     def __invert__(self):
         return type(self)(

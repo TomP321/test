@@ -644,6 +644,13 @@ class WriterTests(SimpleTestCase):
             ("datetime.datetime(2014, 1, 1, 1, 1)", {"import datetime"}),
         )
         self.assertSerializedResultEqual(
+            datetime.datetime(2012, 1, 1, 1, 1, tzinfo=datetime.UTC),
+            (
+                "datetime.datetime(2012, 1, 1, 1, 1, tzinfo=datetime.timezone.utc)",
+                {"import datetime"},
+            ),
+        )
+        self.assertSerializedResultEqual(
             datetime.datetime(2012, 1, 1, 1, 1, tzinfo=datetime.timezone.utc),
             (
                 "datetime.datetime(2012, 1, 1, 1, 1, tzinfo=datetime.timezone.utc)",
@@ -1042,7 +1049,7 @@ class WriterTests(SimpleTestCase):
                         "myfield",
                         models.DateTimeField(
                             default=datetime.datetime(
-                                2012, 1, 1, 1, 1, tzinfo=datetime.timezone.utc
+                                2012, 1, 1, 1, 1, tzinfo=datetime.UTC
                             ),
                         ),
                     ),
@@ -1066,7 +1073,7 @@ class WriterTests(SimpleTestCase):
         Test comments at top of file.
         """
         migration = type("Migration", (migrations.Migration,), {"operations": []})
-        dt = datetime.datetime(2015, 7, 31, 4, 40, 0, 0, tzinfo=datetime.timezone.utc)
+        dt = datetime.datetime(2015, 7, 31, 4, 40, 0, 0, tzinfo=datetime.UTC)
         with mock.patch("django.db.migrations.writer.now", lambda: dt):
             for include_header in (True, False):
                 with self.subTest(include_header=include_header):
@@ -1138,3 +1145,22 @@ class WriterTests(SimpleTestCase):
             ValueError, "'TestModel1' must inherit from 'BaseSerializer'."
         ):
             MigrationWriter.register_serializer(complex, TestModel1)
+
+    def test_composite_pk_import(self):
+        migration = type(
+            "Migration",
+            (migrations.Migration,),
+            {
+                "operations": [
+                    migrations.AddField(
+                        "foo",
+                        "bar",
+                        models.CompositePrimaryKey("foo_id", "bar_id"),
+                    ),
+                ],
+            },
+        )
+        writer = MigrationWriter(migration)
+        output = writer.as_string()
+        self.assertEqual(output.count("import"), 1)
+        self.assertIn("from django.db import migrations, models", output)

@@ -1,6 +1,5 @@
 from django.db import DatabaseError, InterfaceError
 from django.db.backends.base.features import BaseDatabaseFeatures
-from django.db.backends.oracle.oracledb_any import is_oracledb
 from django.utils.functional import cached_property
 
 
@@ -139,15 +138,24 @@ class DatabaseFeatures(BaseDatabaseFeatures):
                     },
                 }
             )
-        if is_oracledb and self.connection.oracledb_version >= (2, 1, 2):
+        if self.connection.is_pool:
             skips.update(
                 {
-                    "python-oracledb 2.1.2+ no longer hides 'ORA-1403: no data found' "
-                    "exceptions raised in database triggers.": {
+                    "Pooling does not support persistent connections": {
+                        "backends.base.test_base.ConnectionHealthChecksTests."
+                        "test_health_checks_enabled",
+                        "backends.base.test_base.ConnectionHealthChecksTests."
+                        "test_health_checks_enabled_errors_occurred",
+                        "backends.base.test_base.ConnectionHealthChecksTests."
+                        "test_health_checks_disabled",
+                        "backends.base.test_base.ConnectionHealthChecksTests."
+                        "test_set_autocommit_health_checks_enabled",
+                        "servers.tests.LiveServerTestCloseConnectionTest."
+                        "test_closes_connections",
                         "backends.oracle.tests.TransactionalTests."
-                        "test_hidden_no_data_found_exception"
+                        "test_password_with_at_sign",
                     },
-                },
+                }
             )
         return skips
 
@@ -208,3 +216,8 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @cached_property
     def bare_select_suffix(self):
         return "" if self.connection.oracle_version >= (23,) else " FROM DUAL"
+
+    @cached_property
+    def supports_tuple_lookups(self):
+        # Support is known to be missing on 23.2 but available on 23.4.
+        return self.connection.oracle_version >= (23, 4)

@@ -240,8 +240,8 @@ class HttpResponseBase:
         if expires is not None:
             if isinstance(expires, datetime.datetime):
                 if timezone.is_naive(expires):
-                    expires = timezone.make_aware(expires, datetime.timezone.utc)
-                delta = expires - datetime.datetime.now(tz=datetime.timezone.utc)
+                    expires = timezone.make_aware(expires, datetime.UTC)
+                delta = expires - datetime.datetime.now(tz=datetime.UTC)
                 # Add one second so the date matches exactly (a fraction of
                 # time gets lost between converting to a timedelta and
                 # then the date string).
@@ -627,10 +627,12 @@ class FileResponse(StreamingHttpResponse):
 class HttpResponseRedirectBase(HttpResponse):
     allowed_schemes = ["http", "https", "ftp"]
 
-    def __init__(self, redirect_to, *args, **kwargs):
+    def __init__(self, redirect_to, preserve_request=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["Location"] = iri_to_uri(redirect_to)
         parsed = urlsplit(str(redirect_to))
+        if preserve_request:
+            self.status_code = self.status_code_preserve_request
         if parsed.scheme and parsed.scheme not in self.allowed_schemes:
             raise DisallowedRedirect(
                 "Unsafe redirect to URL with protocol '%s'" % parsed.scheme
@@ -652,10 +654,12 @@ class HttpResponseRedirectBase(HttpResponse):
 
 class HttpResponseRedirect(HttpResponseRedirectBase):
     status_code = 302
+    status_code_preserve_request = 307
 
 
 class HttpResponsePermanentRedirect(HttpResponseRedirectBase):
     status_code = 301
+    status_code_preserve_request = 308
 
 
 class HttpResponseNotModified(HttpResponse):

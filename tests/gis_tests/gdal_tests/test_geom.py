@@ -1,5 +1,6 @@
 import json
 import pickle
+from unittest import mock, skipIf
 
 from django.contrib.gis.gdal import (
     CoordTransform,
@@ -10,10 +11,10 @@ from django.contrib.gis.gdal import (
 )
 from django.contrib.gis.gdal.geometries import CircularString, CurvePolygon
 from django.contrib.gis.geos import GEOSException
+from django.contrib.gis.geos.libgeos import geos_version_tuple
 from django.template import Context
 from django.template.engine import Engine
 from django.test import SimpleTestCase
-from django.utils.deprecation import RemovedInDjango60Warning
 
 from ..test_data import TestDataMixin
 
@@ -872,12 +873,19 @@ class OGRGeomTest(SimpleTestCase, TestDataMixin):
         self.assertEqual(geom.geom_type.name, "PointM")
         self.assertEqual(geom.geom_type.num, 2001)
 
+    @skipIf(geos_version_tuple() < (3, 12), "GEOS >= 3.12.0 is required")
     def test_point_m_dimension_geos(self):
-        """GEOSGeometry does not yet support the M dimension."""
-        geom = OGRGeometry("POINT ZM (1 2 3 4)")
-        self.assertEqual(geom.geos.wkt, "POINT Z (1 2 3)")
-        geom = OGRGeometry("POINT M (1 2 3)")
-        self.assertEqual(geom.geos.wkt, "POINT (1 2)")
+        geo_zm = OGRGeometry("POINT ZM (1 2 3 4)")
+        self.assertEqual(geo_zm.geos.wkt, "POINT ZM (1 2 3 4)")
+        geo_m = OGRGeometry("POINT M (1 2 3)")
+        self.assertEqual(geo_m.geos.wkt, "POINT M (1 2 3)")
+
+    @mock.patch("django.contrib.gis.geos.libgeos.geos_version", lambda: b"3.11.0")
+    def test_point_m_dimension_geos_version(self):
+        geo_zm = OGRGeometry("POINT ZM (1 2 3 4)")
+        self.assertEqual(geo_zm.geos.wkt, "POINT Z (1 2 3)")
+        geo_m = OGRGeometry("POINT M (1 2 3)")
+        self.assertEqual(geo_m.geos.wkt, "POINT (1 2)")
 
     def test_centroid(self):
         point = OGRGeometry("POINT (1 2 3)")
@@ -1063,13 +1071,3 @@ class OGRGeomTest(SimpleTestCase, TestDataMixin):
         )
         self.assertIsInstance(geom, CurvePolygon)
         self.assertIsInstance(geom.shell, CircularString)
-
-
-class DeprecationTests(SimpleTestCase):
-    def test_coord_setter_deprecation(self):
-        geom = OGRGeometry("POINT (1 2)")
-        msg = "coord_dim setter is deprecated. Use set_3d() instead."
-        with self.assertWarnsMessage(RemovedInDjango60Warning, msg) as ctx:
-            geom.coord_dim = 3
-        self.assertEqual(geom.coord_dim, 3)
-        self.assertEqual(ctx.filename, __file__)

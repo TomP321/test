@@ -28,10 +28,11 @@ Measurement                Relationships             Operations              Edi
 :class:`Area`              :class:`Azimuth`          :class:`Difference`     :class:`ForcePolygonCW`                      :class:`AsGeoJSON`  :class:`IsEmpty`
 :class:`Distance`          :class:`BoundingCircle`   :class:`Intersection`   :class:`MakeValid`                           :class:`AsGML`      :class:`IsValid`
 :class:`GeometryDistance`  :class:`Centroid`         :class:`SymDifference`  :class:`Reverse`                             :class:`AsKML`      :class:`MemSize`
-:class:`Length`            :class:`ClosestPoint`     :class:`Union`          :class:`Scale`                               :class:`AsSVG`      :class:`NumGeometries`
-:class:`Perimeter`         :class:`Envelope`                                 :class:`SnapToGrid`      :class:`FromWKB`    :class:`AsWKB`      :class:`NumPoints`
-                           :class:`LineLocatePoint`                          :class:`Transform`       :class:`FromWKT`    :class:`AsWKT`
-                           :class:`PointOnSurface`                           :class:`Translate`                           :class:`GeoHash`
+:class:`Length`            :class:`ClosestPoint`     :class:`Union`          :class:`Rotate`                              :class:`AsSVG`      :class:`NumGeometries`
+:class:`Perimeter`         :class:`Envelope`                                 :class:`Scale`           :class:`FromWKB`    :class:`AsWKB`      :class:`NumPoints`
+                           :class:`LineLocatePoint`                          :class:`SnapToGrid`      :class:`FromWKT`    :class:`AsWKT`
+                           :class:`PointOnSurface`                           :class:`Transform`                           :class:`GeoHash`
+                                                                             :class:`Translate`
 =========================  ========================  ======================  =======================  ==================  ==================  ======================
 
 ``Area``
@@ -238,10 +239,6 @@ polygon that can fully contain the geometry.
 
 The ``num_seg`` parameter is used only on PostGIS.
 
-.. versionchanged:: 5.1
-
-    SpatiaLite 5.1+ support was added.
-
 ``Centroid``
 ============
 
@@ -367,10 +364,6 @@ Creates geometry from `Well-known binary (WKB)`_ representation. The optional
 ``srid`` argument allows to specify the SRID of the resulting geometry.
 ``srid`` is ignored on Oracle.
 
-.. versionchanged:: 5.1
-
-    The ``srid`` argument was added.
-
 ``FromWKT``
 ===========
 
@@ -384,16 +377,12 @@ Creates geometry from `Well-known text (WKT)`_ representation. The optional
 ``srid`` argument allows to specify the SRID of the resulting geometry.
 ``srid`` is ignored on Oracle.
 
-.. versionchanged:: 5.1
-
-    The ``srid`` argument was added.
-
 ``GeoHash``
 ===========
 
 .. class:: GeoHash(expression, precision=None, **extra)
 
-*Availability*: MariaDB, `MySQL
+*Availability*: `MySQL
 <https://dev.mysql.com/doc/refman/en/spatial-geohash-functions.html#function_st-geohash>`__,
 `PostGIS <https://postgis.net/docs/ST_GeoHash.html>`__, SpatiaLite
 (LWGEOM/RTTOPO)
@@ -405,10 +394,6 @@ The ``precision`` keyword argument controls the number of characters in the
 result.
 
 __ https://en.wikipedia.org/wiki/Geohash
-
-.. versionchanged:: 5.2
-
-    MariaDB 11.7+ support was added.
 
 ``GeometryDistance``
 ====================
@@ -448,16 +433,12 @@ geometry. Returns ``True`` if its value is empty and ``False`` otherwise.
 
 .. class:: IsValid(expr)
 
-*Availability*: MariaDB, `MySQL
+*Availability*: `MySQL
 <https://dev.mysql.com/doc/refman/en/spatial-convenience-functions.html#function_st-isvalid>`__,
 `PostGIS <https://postgis.net/docs/ST_IsValid.html>`__, Oracle, SpatiaLite
 
 Accepts a geographic field or expression and tests if the value is well formed.
 Returns ``True`` if its value is a valid geometry and ``False`` otherwise.
-
-.. versionchanged:: 5.2
-
-    MariaDB 11.7+ support was added.
 
 ``Length``
 ==========
@@ -575,6 +556,19 @@ SpatiaLite
 
 Accepts a single geographic field or expression and returns a geometry with
 reversed coordinates.
+
+``Rotate``
+==========
+
+.. versionadded:: 6.0
+
+.. class:: Rotate(expression, angle, origin=None, **extra)
+
+*Availability*: `PostGIS <https://postgis.net/docs/ST_Rotate.html>`__
+
+Rotates a geometry by a specified ``angle`` around the origin. Optionally, the
+rotation can be performed around a point, defined by the ``origin``
+parameter.
 
 ``Scale``
 =========

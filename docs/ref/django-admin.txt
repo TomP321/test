@@ -1264,6 +1264,10 @@ If the optional destination is provided, Django will use that name instead. If
 the directory with the given name doesn't exist, it will be created. You can
 use '.' to denote the current working directory.
 
+.. versionchanged:: 6.0
+
+    Automatic creation of the destination directory was added.
+
 For example:
 
 .. console::
@@ -1376,6 +1380,10 @@ If the optional destination is provided, Django will use that name as the
 project directory, and create ``manage.py`` and the project package within it.
 If the directory with the given name doesn't exist, it will be created. Use '.'
 to denote the current working directory.
+
+.. versionchanged:: 6.0
+
+    Automatic creation of the destination directory was added.
 
 For example:
 

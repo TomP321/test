@@ -3110,6 +3110,34 @@ class StartApp(AdminScriptTestCase):
         self.assertNoOutput(err)
         self.assertTrue(os.path.exists(testapp_dir))
 
+    def test_custom_app_destination_missing_with_nested_subdirectory(self):
+        args = [
+            "startapp",
+            "my_app",
+            "apps/my_app",
+        ]
+        testapp_dir = os.path.join(self.test_dir, "apps", "my_app")
+        out, err = self.run_django_admin(args)
+        self.assertNoOutput(out)
+        self.assertNoOutput(err)
+        self.assertTrue(os.path.exists(testapp_dir))
+
+    def test_custom_app_directory_creation_error_handling(self):
+        """The error is displayed to the user in case of OSError."""
+        args = [
+            "startapp",
+            "my_app",
+            "/invalid/project_dir/my_app",
+        ]
+        testapp_dir = os.path.join("invalid", "project_dir", "my_app")
+        out, err = self.run_django_admin(args)
+        self.assertNoOutput(out)
+        self.assertOutput(
+            err,
+            "Read-only file system: '/invalid'",
+        )
+        self.assertFalse(os.path.exists(testapp_dir))
+
 
 class DiffSettings(AdminScriptTestCase):
     """Tests for diffsettings management command."""

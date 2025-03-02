@@ -3122,6 +3122,10 @@ class StartApp(AdminScriptTestCase):
         self.assertNoOutput(err)
         self.assertTrue(os.path.exists(testapp_dir))
 
+    @unittest.skipIf(
+        sys.platform == "win32",
+        "Windows only partially supports umasks and chmod.",
+    )
     def test_custom_app_directory_creation_error_handling(self):
         """The error is displayed to the user in case of OSError."""
         args = [

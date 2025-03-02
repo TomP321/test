@@ -3130,7 +3130,11 @@ class StartApp(AdminScriptTestCase):
             "/invalid/project_dir/my_app",
         ]
         testapp_dir = os.path.join("invalid", "project_dir", "my_app")
-        out, err = self.run_django_admin(args)
+        with mock.patch(
+            "os.makedirs",
+            side_effect=OSError("Read-only file system: '/invalid"),
+        ):
+            out, err = self.run_django_admin(args)
         self.assertNoOutput(out)
         self.assertOutput(
             err,

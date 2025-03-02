@@ -167,13 +167,16 @@ class Combinable:
         return NegatedExpression(self)
 
 
+class OutputFieldIsNoneError(FieldError):
+    pass
+
+
 class BaseExpression:
     """Base class for all query expressions."""
 
     empty_result_set_value = NotImplemented
     # aggregate specific fields
     is_summary = False
-    _output_field_resolved_to_none = False
     # Can the expression be used in a WHERE clause?
     filterable = True
     # Can the expression be used as a source expression in Window?
@@ -323,11 +326,12 @@ class BaseExpression:
         """Return the output type of this expressions."""
         output_field = self._resolve_output_field()
         if output_field is None:
-            self._output_field_resolved_to_none = True
-            raise FieldError("Cannot resolve expression type, unknown output_field")
+            raise OutputFieldIsNoneError(
+                "Cannot resolve expression type, unknown output_field"
+            )
         return output_field
 
-    @cached_property
+    @property
     def _output_field_or_none(self):
         """
         Return the output field of this expression, or None if
@@ -335,9 +339,8 @@ class BaseExpression:
         """
         try:
             return self.output_field
-        except FieldError:
-            if not self._output_field_resolved_to_none:
-                raise
+        except OutputFieldIsNoneError:
+            return
 
     def _resolve_output_field(self):
         """
@@ -520,6 +523,18 @@ class Expression(BaseExpression, Combinable):
     def _constructor_signature(cls):
         return inspect.signature(cls.__init__)
 
+    @classmethod
+    def _identity(cls, value):
+        if isinstance(value, tuple):
+            return tuple(map(cls._identity, value))
+        if isinstance(value, dict):
+            return tuple((key, cls._identity(val)) for key, val in value.items())
+        if isinstance(value, fields.Field):
+            if value.name and value.model:
+                return value.model._meta.label, value.name
+            return type(value)
+        return make_hashable(value)
+
     @cached_property
     def identity(self):
         args, kwargs = self._constructor_args
@@ -529,13 +544,10 @@ class Expression(BaseExpression, Combinable):
         next(arguments)
         identity = [self.__class__]
         for arg, value in arguments:
-            if isinstance(value, fields.Field):
-                if value.name and value.model:
-                    value = (value.model._meta.label, value.name)
-                else:
-                    value = type(value)
-            else:
-                value = make_hashable(value)
+            # If __init__() makes use of *args or **kwargs captures `value`
+            # will respectively be a tuple or a dict that must have its
+            # constituents unpacked (mainly if contain Field instances).
+            value = self._identity(value)
             identity.append((arg, value))
         return tuple(identity)
 
@@ -890,7 +902,24 @@ class F(Combinable):
         return query.resolve_ref(self.name, allow_joins, reuse, summarize)
 
     def replace_expressions(self, replacements):
-        return replacements.get(self, self)
+        if (replacement := replacements.get(self)) is not None:
+            return replacement
+        field_name, *transforms = self.name.split(LOOKUP_SEP)
+        # Avoid unnecessarily looking up replacements with field_name again as
+        # in the vast majority of cases F instances won't be composed of any
+        # lookups.
+        if not transforms:
+            return self
+        if (
+            replacement := replacements.get(F(field_name))
+        ) is None or replacement._output_field_or_none is None:
+            return self
+        for transform in transforms:
+            transform_class = replacement.get_transform(transform)
+            if transform_class is None:
+                return self
+            replacement = transform_class(replacement)
+        return replacement
 
     def asc(self, **kwargs):
         return OrderBy(self, **kwargs)
@@ -1363,6 +1392,9 @@ class ColPairs(Expression):
 
     def resolve_expression(self, *args, **kwargs):
         return self
+
+    def select_format(self, compiler, sql, params):
+        return sql, params
 
 
 class Ref(Expression):

@@ -48,7 +48,8 @@ Minor features
 :mod:`django.contrib.admindocs`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The new :attr:`.AdminSite.password_change_form` attribute allows customizing
+  the form used in the admin site password change view.
 
 :mod:`django.contrib.auth`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +65,12 @@ Minor features
 :mod:`django.contrib.gis`
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The new :attr:`.GEOSGeometry.hasm` property checks whether the geometry has
+  the M dimension.
+
+* The new :class:`~django.contrib.gis.db.models.functions.Rotate` database
+  function rotates a geometry by a specified angle around the origin or a
+  specified point.
 
 :mod:`django.contrib.messages`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,7 +182,8 @@ Migrations
 Models
 ~~~~~~
 
-* ...
+* :doc:`Constraints </ref/models/constraints>` now implement a ``check()``
+  method that is already registered with the check framework.
 
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -201,7 +208,8 @@ Signals
 Templates
 ~~~~~~~~~
 
-* ...
+* The new variable ``forloop.length`` is now available within a :ttag:`for`
+  loop.
 
 Tests
 ~~~~~
@@ -234,7 +242,36 @@ Database backend API
 This section describes changes that may be needed in third-party database
 backends.
 
-* ...
+* ``BaseDatabaseCreation.create_test_db(serialize)`` is deprecated. Use
+  ``serialize_db_to_string()`` instead.
+
+Dropped support for MariaDB 10.5
+--------------------------------
+
+Upstream support for MariaDB 10.5 ends in June 2025. Django 6.0 supports
+MariaDB 10.6 and higher.
+
+Dropped support for Python < 3.12
+---------------------------------
+
+Because Python 3.12 is now the minimum supported version for Django, any
+optional dependencies must also meet that requirement. The following versions
+of each library are the first to add or confirm compatibility with Python 3.12:
+
+* ``aiosmtpd`` 1.4.5
+* ``argon2-cffi`` 23.1.0
+* ``bcrypt`` 4.1.1
+* ``geoip2`` 4.8.0
+* ``Pillow`` 10.1.0
+* ``mysqlclient`` 2.2.1
+* ``numpy`` 1.26.0
+* ``PyYAML`` 6.0.2
+* ``psycopg`` 3.1.12
+* ``psycopg2`` 2.9.9
+* ``redis-py`` 5.1.0
+* ``selenium`` 4.23.0
+* ``sqlparse`` 0.5.0
+* ``tblib`` 3.0.0
 
 Miscellaneous
 -------------
@@ -249,7 +286,8 @@ Features deprecated in 6.0
 Miscellaneous
 -------------
 
-* ...
+* ``BaseDatabaseCreation.create_test_db(serialize)`` is deprecated. Use
+  ``serialize_db_to_string()`` instead.
 
 Features removed in 6.0
 =======================

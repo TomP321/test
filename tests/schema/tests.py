@@ -2428,7 +2428,7 @@ class SchemaTests(TransactionTestCase):
             data = JSONField(
                 encoder=DjangoJSONEncoder,
                 db_default={
-                    "epoch": datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+                    "epoch": datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
                 },
             )
 
@@ -4861,6 +4861,24 @@ class SchemaTests(TransactionTestCase):
             comment,
         )
 
+    @skipUnlessDBFeature("supports_comments", "supports_stored_generated_columns")
+    def test_add_db_comment_generated_field(self):
+        comment = "Custom comment"
+        field = GeneratedField(
+            expression=Value(1),
+            db_persist=True,
+            output_field=IntegerField(),
+            db_comment=comment,
+        )
+        field.set_attributes_from_name("volume")
+        with connection.schema_editor() as editor:
+            editor.create_model(Author)
+            editor.add_field(Author, field)
+        self.assertEqual(
+            self.get_column_comment(Author._meta.db_table, "volume"),
+            comment,
+        )
+
     @skipUnlessDBFeature("supports_comments")
     def test_add_db_comment_and_default_charfield(self):
         comment = "Custom comment with default"
@@ -5315,7 +5333,7 @@ class SchemaTests(TransactionTestCase):
         """
         now = datetime.datetime(month=1, day=1, year=2000, hour=1, minute=1)
         now_tz = datetime.datetime(
-            month=1, day=1, year=2000, hour=1, minute=1, tzinfo=datetime.timezone.utc
+            month=1, day=1, year=2000, hour=1, minute=1, tzinfo=datetime.UTC
         )
         mocked_datetime.now = mock.MagicMock(return_value=now)
         mocked_tz.now = mock.MagicMock(return_value=now_tz)

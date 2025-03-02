@@ -129,8 +129,6 @@ permissions.
   <https://forum.djangoproject.com/c/announcements/7>`_ and to  send emails to
   the following mailing lists:
 
-  * `django-users <https://groups.google.com/g/django-users/>`_
-  * `django-developers <https://groups.google.com/g/django-developers/>`_
   * `django-announce <https://groups.google.com/g/django-announce/>`_
 
 * Access to the ``django-security`` repo in GitHub. Among other things, this
@@ -188,8 +186,12 @@ A week before a security release
 A few days before any release
 -----------------------------
 
-#. As the release approaches, watch Trac to make sure no release blockers
-   are left for the upcoming release.
+#. As the release approaches, watch Trac to make sure no release blockers are
+   left for the upcoming release. Under exceptional circumstances, such as to
+   meet a pre-determined security release date, a release could still go ahead
+   with an open release blocker. The releaser is trusted with the decision to
+   release with an open release blocker or to postpone the release date of a
+   non-security release if required.
 
 #. Check with the other mergers to make sure they don't have any uncommitted
    changes for the release.
@@ -611,7 +613,7 @@ Now you're ready to actually put the release out there. To do this:
 
    .. code-block:: shell
 
-       $ twine upload dist/*
+       $ twine upload --repository django dist/*
 
 #. Go to the `Add release page in the admin`__, enter the new release number
    exactly as it appears in the name of the tarball
@@ -644,9 +646,8 @@ Now you're ready to actually put the release out there. To do this:
    __ https://github.com/django/djangoproject.com/blob/main/djangoproject/static/robots.docs.txt
    __ https://github.com/django/django-docs-translations
 
-#. Post the release announcement to the |django-announce|, |django-developers|,
-   |django-users| mailing lists, and the Django Forum. This should include a
-   link to the announcement blog post.
+#. Post the release announcement to the |django-announce| mailing list and the
+   Django Forum. This should include a link to the announcement blog post.
 
 #. If this is a security release, send a separate email to
    oss-security@lists.openwall.com. Provide a descriptive subject, for example,

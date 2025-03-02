@@ -206,7 +206,10 @@ class ForNode(Node):
             unpack = num_loopvars > 1
             # Create a forloop value in the context.  We'll update counters on each
             # iteration just below.
-            loop_dict = context["forloop"] = {"parentloop": parentloop}
+            loop_dict = context["forloop"] = {
+                "parentloop": parentloop,
+                "length": len_values,
+            }
             for i, item in enumerate(values):
                 # Shortcuts for current loop iteration number.
                 loop_dict["counter0"] = i
@@ -1194,18 +1197,18 @@ def querystring(context, query_dict=None, **kwargs):
     """
     if query_dict is None:
         query_dict = context.request.GET
-    query_dict = query_dict.copy()
+    params = query_dict.copy()
     for key, value in kwargs.items():
         if value is None:
-            if key in query_dict:
-                del query_dict[key]
+            if key in params:
+                del params[key]
         elif isinstance(value, Iterable) and not isinstance(value, str):
-            query_dict.setlist(key, value)
+            params.setlist(key, value)
         else:
-            query_dict[key] = value
-    if not query_dict:
+            params[key] = value
+    if not params and not query_dict:
         return ""
-    query_string = query_dict.urlencode()
+    query_string = params.urlencode()
     return f"?{query_string}"
 
 

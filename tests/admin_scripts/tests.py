@@ -3127,18 +3127,18 @@ class StartApp(AdminScriptTestCase):
         args = [
             "startapp",
             "my_app",
-            "/invalid/project_dir/my_app",
+            "project_dir/my_app",
         ]
-        testapp_dir = os.path.join("invalid", "project_dir", "my_app")
-        with mock.patch(
-            "os.makedirs",
-            side_effect=OSError("Read-only file system: '/invalid"),
-        ):
-            out, err = self.run_django_admin(args)
+        # Make a read-only parent directory
+        os.makedirs(
+            os.path.join(self.test_dir, "project_dir"), exist_ok=True, mode=0o200
+        )
+        testapp_dir = os.path.join(self.test_dir, "project_dir", "my_app")
+        out, err = self.run_django_admin(args)
         self.assertNoOutput(out)
         self.assertOutput(
             err,
-            "Read-only file system: '/invalid'",
+            "Permission denied",
         )
         self.assertFalse(os.path.exists(testapp_dir))
 

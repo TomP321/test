@@ -1,3 +1,5 @@
+from psycopg2.extensions import adapt
+
 import re
 
 from django.db.models import (
@@ -397,7 +399,7 @@ class LexemeCombinable:
         if not isinstance(other, LexemeCombinable):
             raise TypeError(
                 "A Lexeme can only be combined with another Lexeme, "
-                "got {}.".format(type(other))
+                f"got {other.__class__.__name__}."
             )
         if reversed:
             return CombinedLexeme(other, connector, self)
@@ -418,6 +420,12 @@ class LexemeCombinable:
     def __and__(self, other):
         return self._combine(other, self.BITAND, False)
 
+    def __ror__(self, other):
+        return self._combine(other, self.BITOR, True)
+
+    def __rand__(self, other):
+        return self._combine(other, self.BITOR, True)
+
 
 class Lexeme(LexemeCombinable, Value):
     _output_field = SearchQueryField()
@@ -425,13 +433,16 @@ class Lexeme(LexemeCombinable, Value):
     def __init__(
         self, value, output_field=None, *, invert=False, prefix=False, weight=None
     ):
+        if weight and weight.lower() not in {"a", "b", "c", "d"}:
+            raise ValueError("Weight must be one of 'A', 'B', 'C', and 'D'")
+
         self.prefix = prefix
         self.invert = invert
         self.weight = weight
         super().__init__(value, output_field=output_field)
 
     def process_rhs(self, compiler, connection):
-        param = "'%s'" % psql_escape(self.value)
+        param = adapt(psql_escape(self.value)).getquoted().decode("latin-1")
 
         label = ""
         if self.prefix:

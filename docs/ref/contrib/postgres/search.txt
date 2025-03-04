@@ -283,6 +283,8 @@ floats to :class:`SearchRank` as ``weights`` in the same order above:
 Lexeme objects
 ==============
 
+.. versionadded:: 6.0
+
 Lexeme objects allow search operators to be safely used with strings from an
 untrusted source. The content of each lexeme is escaped so that any operators that may
 exist in the string itself will not be interpreted.

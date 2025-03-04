@@ -855,38 +855,36 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
         compiler = query.get_compiler(connection.alias)
 
         tests = (
-            (Lexeme("a"), "%s", ["'a'"]),
-            (Lexeme("a", invert=True), "%s", ["!'a'"]),
-            (~Lexeme("a"), "%s", ["!'a'"]),
-            (Lexeme("a", prefix=True), "%s", ["'a':*"]),
-            (Lexeme("a", weight="D"), "%s", ["'a':D"]),
-            (Lexeme("a", invert=True, prefix=True, weight="D"), "%s", ["!'a':*D"]),
-            (Lexeme("a") | Lexeme("b") & ~Lexeme("c"), "%s", ["('a' | ('b' & !'c'))"]),
+            (Lexeme("a"), ["'a'"]),
+            (Lexeme("a", invert=True), ["!'a'"]),
+            (~Lexeme("a"), ["!'a'"]),
+            (Lexeme("a", prefix=True), ["'a':*"]),
+            (Lexeme("a", weight="D"), ["'a':D"]),
+            (Lexeme("a", invert=True, prefix=True, weight="D"), ["!'a':*D"]),
+            (Lexeme("a") | Lexeme("b") & ~Lexeme("c"), ["('a' | ('b' & !'c'))"]),
             (
                 ~(Lexeme("a") | Lexeme("b") & ~Lexeme("c")),
-                "%s",
                 ["(!'a' & (!'b' | 'c'))"],
             ),
             # Some escaping tests
             (
                 Lexeme("L'amour piqué par une abeille"),
-                "%s",
                 ["'L amour piqué par une abeille'"],
             ),
-            (Lexeme("'starting quote"), "%s", ["'starting quote'"]),
-            (Lexeme("ending quote'"), "%s", ["'ending quote'"]),
-            (Lexeme("double quo''te"), "%s", ["'double quo te'"]),
-            (Lexeme("triple quo'''te"), "%s", ["'triple quo te'"]),
-            (Lexeme("backslash\\"), "%s", ["'backslash'"]),
-            (Lexeme("exclamation!"), "%s", ["'exclamation'"]),
-            (Lexeme("ampers&nd"), "%s", ["'ampers nd'"]),
+            (Lexeme("'starting quote"), ["'starting quote'"]),
+            (Lexeme("ending quote'"), ["'ending quote'"]),
+            (Lexeme("double quo''te"), ["'double quo te'"]),
+            (Lexeme("triple quo'''te"), ["'triple quo te'"]),
+            (Lexeme("backslash\\"), ["'backslash'"]),
+            (Lexeme("exclamation!"), ["'exclamation'"]),
+            (Lexeme("ampers&nd"), ["'ampers nd'"]),
         )
-        for expression, expected_sql, expected_params in tests:
-            with self.subTest(expression=expression):
-                resolved = expression.resolve_expression(query)
-                sql, params = resolved.as_sql(compiler, connection)
-                self.assertEqual(sql, expected_sql)
-                self.assertEqual(params, expected_params)
+
+        expected_sql = "%s"
+        for expression, expected_params in tests:
+            sql, params = expression.as_sql(compiler, connection)
+            self.assertEqual(sql, expected_sql)
+            self.assertEqual(params, expected_params)
 
     def test_prefix_searching(self):
         searched = Line.objects.annotate(
@@ -933,3 +931,11 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
         )
 
         self.assertSequenceEqual(searched, [self.verse0, self.verse1])
+
+    def test_invalid_combinations(self):
+        msg = "A Lexeme can only be combined with another Lexeme, got NoneType."
+        with self.assertRaisesMessage(TypeError, msg):
+            Line.objects.filter(dialogue__search=None | Lexeme("kneecaps"))
+
+        with self.assertRaisesMessage(TypeError, msg):
+            Line.objects.filter(dialogue__search=None & Lexeme("kneecaps"))

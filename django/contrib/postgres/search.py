@@ -1,5 +1,7 @@
 import re
 
+from psycopg2.extensions import adapt
+
 from django.db.models import (
     CharField,
     Expression,
@@ -12,9 +14,6 @@ from django.db.models import (
 )
 from django.db.models.expressions import CombinedExpression, register_combinable_fields
 from django.db.models.functions import Cast, Coalesce
-
-from psycopg2.extensions import adapt
-
 
 _SEARCH_SPEC_CHARS = r"['\0\[\]()|&:*!@<>\\]"
 _spec_chars_re = re.compile(_SEARCH_SPEC_CHARS)

@@ -293,14 +293,14 @@ You can combine lexemes with other lexemes in Python using the ``&`` and ``|``
 operators and also negate them with the ``~`` operator. For example::
 
     >>> from django.contrib.postgres.search import SearchQuery, Lexeme
-    >>> SearchRank(Lexeme("The user's search query") & Lexeme("Something else") & ~Lexeme("Exclude documents that match this"))
-    >>> SearchRank(Lexeme("The user's search query") | Lexeme("Something else"))
+    >>> SearchQuery(Lexeme("The user's search query") & Lexeme("Something else") & ~Lexeme("Exclude documents that match this"))
+    >>> SearchQuery(Lexeme("The user's search query") | Lexeme("Something else"))
 
 Lexeme objects also support weighting and prefixes::
 
     >>> from django.contrib.postgres.search import SearchQuery, Lexeme
-    >>> SearchRank(Lexeme("These terms have lower weight", weight='D') & Lexeme("than these terms")
-    >>> SearchRank(Lexeme("Djan", prefix=True)
+    >>> SearchQuery(Lexeme("These terms have lower weight", weight='D') & Lexeme("than these terms"))
+    >>> SearchQuery(Lexeme("Djan", prefix=True))
 
 Performance
 ===========

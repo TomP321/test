@@ -407,17 +407,17 @@ class LexemeCombinable:
     # On Combinable, these are not implemented to reduce confusion with Q. In
     # this case we are actually (ab)using them to do logical combination so
     # it's consistent with other usage in Django.
-    def bitand(self, other):
-        return self._combine(other, self.BITAND, False)
-
     def bitor(self, other):
         return self._combine(other, self.BITOR, False)
 
+    def bitand(self, other):
+        return self._combine(other, self.BITAND, False)
+
     def __or__(self, other):
-        return self._combine(other, self.BITOR, False)
+        return self.bitor(other)
 
     def __and__(self, other):
-        return self._combine(other, self.BITAND, False)
+        return self.bitand(other)
 
     def __ror__(self, other):
         return self._combine(other, self.BITOR, True)

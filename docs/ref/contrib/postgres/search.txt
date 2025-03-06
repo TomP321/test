@@ -113,12 +113,10 @@ Examples:
 See :ref:`postgresql-fts-search-configuration` for an explanation of the
 ``config`` parameter.
 
-.. versionchanged:: 3.1
-
     Support for ``'websearch'`` search type and query expressions in
     ``SearchQuery.value`` were added.
 
-.. versionchanged:: 3.2
+.. versionchanged:: 6.0
 
     ``Lexeme`` objects were added
 

@@ -877,9 +877,10 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
 
         expected_sql = "%s"
         for expression, expected_params in tests:
-            sql, params = expression.as_sql(compiler, connection)
-            self.assertEqual(sql, expected_sql)
-            self.assertEqual(params, expected_params)
+            with self.subTest(expression=expression, expected_params=expected_params):
+                sql, params = expression.as_sql(compiler, connection)
+                self.assertEqual(sql, expected_sql)
+                self.assertEqual(params, expected_params)
 
     def test_prefix_searching(self):
         searched = Line.objects.annotate(

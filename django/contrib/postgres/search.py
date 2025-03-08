@@ -1,7 +1,6 @@
 import re
 
-from psycopg2.extensions import adapt
-
+from django.db.backends.postgresql.psycopg_any import is_psycopg3
 from django.db.models import (
     CharField,
     Expression,
@@ -459,7 +458,19 @@ class Lexeme(LexemeCombinable, Value):
         super().__init__(value, output_field=output_field)
 
     def process_rhs(self, compiler, connection):
-        param = adapt(psql_escape(self.value)).getquoted().decode("latin-1")
+        escaped_value = psql_escape(self.value)
+        if is_psycopg3:
+            from psycopg.adapt import Dumper
+
+            class StringDumper(Dumper):
+                def dump(self, obj):
+                    return bytes(obj, "utf-8")
+
+            param = StringDumper(str).quote(escaped_value).decode()
+        else:
+            from psycopg2.extensions import adapt
+
+            param = adapt(escaped_value).getquoted().decode("latin-1")
 
         label = ""
         if self.prefix:

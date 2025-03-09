@@ -489,9 +489,9 @@ class Lexeme(LexemeCombinable, Value):
         return self.process_rhs(compiler, connection)
 
     def __invert__(self):
-        return type(self)(
-            self.value, invert=not self.invert, prefix=self.prefix, weight=self.weight
-        )
+        cloned = super().copy()
+        cloned.invert = not self.invert
+        return cloned
 
 
 class CombinedLexeme(LexemeCombinable, CombinedExpression):
@@ -516,8 +516,8 @@ class CombinedLexeme(LexemeCombinable, CombinedExpression):
         # Swap the connector and invert the lhs and rhs.
         # This generates a query that's equivalent to what we expect
         # thanks to De Morgan's theorem
-        return type(self)(
-            ~self.lhs,
-            self.BITAND if self.connector == self.BITOR else self.BITOR,
-            ~self.rhs,
-        )
+        cloned = super().copy()
+        cloned.connector = self.BITAND if self.connector == self.BITOR else self.BITOR
+        cloned.lhs = ~self.lhs
+        cloned.rhs = ~self.rhs
+        return cloned

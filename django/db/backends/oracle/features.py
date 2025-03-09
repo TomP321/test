@@ -45,6 +45,7 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     # does by uppercasing all identifiers.
     ignores_table_name_case = True
     supports_index_on_text_field = False
+    supports_aggregate_order_by_clause = True
     create_test_procedure_without_params_sql = """
         CREATE PROCEDURE "TEST_PROCEDURE" AS
             V_I INTEGER;
@@ -216,3 +217,8 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     @cached_property
     def bare_select_suffix(self):
         return "" if self.connection.oracle_version >= (23,) else " FROM DUAL"
+
+    @cached_property
+    def supports_tuple_lookups(self):
+        # Support is known to be missing on 23.2 but available on 23.4.
+        return self.connection.oracle_version >= (23, 4)

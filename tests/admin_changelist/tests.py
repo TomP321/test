@@ -1076,6 +1076,17 @@ class ChangeListTests(TestCase):
             "http://blues_history.com</a>" % g.pk,
         )
 
+    def test_blank_str_display_links(self):
+        self.client.force_login(self.superuser)
+        gc = GrandChild.objects.create(name="          ")
+        response = self.client.get(
+            reverse("admin:admin_changelist_grandchild_changelist")
+        )
+        self.assertContains(
+            response,
+            '<a href="/admin/admin_changelist/grandchild/%s/change/">-</a>' % gc.pk,
+        )
+
     def test_clear_all_filters_link(self):
         self.client.force_login(self.superuser)
         url = reverse("admin:auth_user_changelist")
@@ -1834,7 +1845,7 @@ class GetAdminLogTests(TestCase):
         """{% get_admin_log %} works without specifying a user."""
         user = User(username="jondoe", password="secret", email="super@example.com")
         user.save()
-        LogEntry.objects.log_actions(user.pk, [user], 1, single_object=True)
+        LogEntry.objects.log_actions(user.pk, [user], 1)
         context = Context({"log_entries": LogEntry.objects.all()})
         t = Template(
             "{% load log %}"

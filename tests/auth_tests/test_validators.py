@@ -273,6 +273,15 @@ class CommonPasswordValidatorTest(SimpleTestCase):
             CommonPasswordValidator().validate("godzilla")
         self.assertEqual(cm.exception.messages, [expected_error])
 
+    def test_common_hexed_codes(self):
+        expected_error = "This password is too common."
+        common_hexed_passwords = ["asdfjkl:", "&#2336:"]
+        for password in common_hexed_passwords:
+            with self.subTest(password=password):
+                with self.assertRaises(ValidationError) as cm:
+                    CommonPasswordValidator().validate(password)
+                self.assertEqual(cm.exception.messages, [expected_error])
+
     def test_validate_custom_list(self):
         path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "common-passwords-custom.txt"
@@ -341,10 +350,10 @@ class UsernameValidatorsTests(SimpleTestCase):
         invalid_usernames = [
             "o'connell",
             "عبد ال",
-            "zerowidth\u200Bspace",
-            "nonbreaking\u00A0space",
+            "zerowidth\u200bspace",
+            "nonbreaking\u00a0space",
             "en\u2013dash",
-            "trailingnewline\u000A",
+            "trailingnewline\u000a",
         ]
         v = validators.UnicodeUsernameValidator()
         for valid in valid_usernames:

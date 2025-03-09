@@ -125,6 +125,7 @@ from .models import (
     Song,
     State,
     Story,
+    Subscriber,
     SuperSecretHideout,
     SuperVillain,
     Telegram,
@@ -1819,6 +1820,11 @@ class AdminCustomTemplateTests(AdminViewBasicTestCase):
         user_admin = CustomUserAdmin(User, site)
         response = user_admin.user_change_password(request, str(user.pk))
         self.assertContains(response, '<div class="help">')
+
+    def test_custom_password_change_form(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse("admin4:password_change"))
+        self.assertContains(response, "Custom old password label")
 
     def test_extended_bodyclass_template_index(self):
         """
@@ -3878,21 +3884,18 @@ class AdminViewStringPrimaryKeyTest(TestCase):
             [cls.m1],
             2,
             change_message="Changed something",
-            single_object=True,
         )
         LogEntry.objects.log_actions(
             user_pk,
             [cls.m1],
             1,
             change_message="Added something",
-            single_object=True,
         )
         LogEntry.objects.log_actions(
             user_pk,
             [cls.m1],
             3,
             change_message="Deleted something",
-            single_object=True,
         )
 
     def setUp(self):
@@ -6859,6 +6862,24 @@ class SeleniumTests(AdminSeleniumTestCase):
         name_input_value = name_input.get_attribute("value")
         self.assertEqual(name_input_value, "Test section 1")
 
+    @screenshot_cases(["desktop_size", "mobile_size", "rtl", "dark", "high_contrast"])
+    def test_long_object_str_on_change_view(self):
+        from selenium.webdriver.common.by import By
+
+        self.admin_login(
+            username="super", password="secret", login_url=reverse("admin:index")
+        )
+        s = Subscriber.objects.create(name="a " * 40, email="b " * 80)
+        self.selenium.get(
+            self.live_server_url
+            + reverse("admin:admin_views_subscriber_change", args=(s.pk,))
+        )
+        object_tools = self.selenium.find_elements(
+            By.CSS_SELECTOR, "div#content ul.object-tools li"
+        )
+        self.assertGreater(len(object_tools), 0)
+        self.take_screenshot("not-overwrap")
+
 
 @override_settings(ROOT_URLCONF="admin_views.urls")
 class ReadonlyTest(AdminFieldExtractionMixin, TestCase):
@@ -7134,7 +7155,7 @@ class ReadonlyTest(AdminFieldExtractionMixin, TestCase):
         url = reverse("admin:admin_views_pizza_change", args=(pizza.pk,))
         with self.settings(LANGUAGE_CODE="fr"):
             response = self.client.get(url)
-        self.assertContains(response, "<label>Toppings\u00A0:</label>", html=True)
+        self.assertContains(response, "<label>Toppings\u00a0:</label>", html=True)
 
 
 @override_settings(ROOT_URLCONF="admin_views.urls")

@@ -80,7 +80,11 @@ Minor features
 :mod:`django.contrib.postgres`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* ...
+* The new ``Lexeme`` class has been added to the PostgreSQL full-text search module, 
+  enabling precise control over search term handling. Lexemes support boolean operations 
+  (&, |, ~), prefix matching, term weighting, and can be combined to create complex 
+  search expressions. This provides fine-grained control over search behavior when 
+  working with PostgreSQL's full-text search capabilities.
 
 :mod:`django.contrib.redirects`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,24 +185,7 @@ Migrations
 Models
 ~~~~~~
 
-* The new ``Lexeme`` class has been added to the PostgreSQL full-text search module, 
-  enabling precise control over search term handling. Lexemes support boolean operations 
-  (&, |, ~), prefix matching, term weighting, and can be combined to create complex 
-  search expressions. This provides fine-grained control over search behavior when 
-  working with PostgreSQL's full-text search capabilities.
-  
-* :doc:`Constraints </ref/models/constraints>` now implement a ``check()``
-  method that is already registered with the check framework.
-
-* The new ``order_by`` argument for :class:`~django.db.models.Aggregate` allows
-  specifying the ordering of the elements in the result.
-
-* The new :attr:`.Aggregate.allow_order_by` class attribute determines whether
-  the aggregate function allows passing an ``order_by`` keyword argument.
-
-* The new :class:`~django.db.models.StringAgg` aggregate returns the input
-  values concatenated into a string, separated by the ``delimiter`` string.
-  This aggregate was previously supported only for PostgreSQL.
+* ...
 
 Requests and Responses
 ~~~~~~~~~~~~~~~~~~~~~~

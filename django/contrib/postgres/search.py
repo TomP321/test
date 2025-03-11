@@ -451,7 +451,7 @@ class Lexeme(LexemeCombinable, Value):
     ):
         if weight and weight.lower() not in {"a", "b", "c", "d"}:
             raise ValueError(
-                f"Weight must be one of 'A', 'B', 'C', and 'D', got {weight}."
+                f"Weight must be one of 'A', 'B', 'C', and 'D', got '{weight}'."
             )
 
         self.prefix = prefix

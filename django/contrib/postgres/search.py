@@ -450,7 +450,9 @@ class Lexeme(LexemeCombinable, Value):
         self, value, output_field=None, *, invert=False, prefix=False, weight=None
     ):
         if weight and weight.lower() not in {"a", "b", "c", "d"}:
-            raise ValueError("Weight must be one of 'A', 'B', 'C', and 'D'")
+            raise ValueError(
+                f"Weight must be one of 'A', 'B', 'C', and 'D', got {weight}."
+            )
 
         self.prefix = prefix
         self.invert = invert

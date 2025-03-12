@@ -850,29 +850,29 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
         compiler = query.get_compiler(connection.alias)
 
         tests = (
-            (Lexeme("a"), ["'a'"]),
-            (Lexeme("a", invert=True), ["!'a'"]),
-            (~Lexeme("a"), ["!'a'"]),
-            (Lexeme("a", prefix=True), ["'a':*"]),
-            (Lexeme("a", weight="D"), ["'a':D"]),
-            (Lexeme("a", invert=True, prefix=True, weight="D"), ["!'a':*D"]),
-            (Lexeme("a") | Lexeme("b") & ~Lexeme("c"), ["('a' | ('b' & !'c'))"]),
+            (Lexeme("a"), ("'a'",)),
+            (Lexeme("a", invert=True), ("!'a'",)),
+            (~Lexeme("a"), ("!'a'",)),
+            (Lexeme("a", prefix=True), ("'a':*",)),
+            (Lexeme("a", weight="D"), ("'a':D",)),
+            (Lexeme("a", invert=True, prefix=True, weight="D"), ("!'a':*D",)),
+            (Lexeme("a") | Lexeme("b") & ~Lexeme("c"), ("('a' | ('b' & !'c'))",)),
             (
                 ~(Lexeme("a") | Lexeme("b") & ~Lexeme("c")),
-                ["(!'a' & (!'b' | 'c'))"],
+                ("(!'a' & (!'b' | 'c'))",),
             ),
             # Some escaping tests
             (
                 Lexeme("L'amour piqué par une abeille"),
-                ["'L amour piqué par une abeille'"],
+                ("'L amour piqué par une abeille'",),
             ),
-            (Lexeme("'starting quote"), ["'starting quote'"]),
-            (Lexeme("ending quote'"), ["'ending quote'"]),
-            (Lexeme("double quo''te"), ["'double quo te'"]),
-            (Lexeme("triple quo'''te"), ["'triple quo te'"]),
-            (Lexeme("backslash\\"), ["'backslash'"]),
-            (Lexeme("exclamation!"), ["'exclamation'"]),
-            (Lexeme("ampers&nd"), ["'ampers nd'"]),
+            (Lexeme("'starting quote"), ("'starting quote'",)),
+            (Lexeme("ending quote'"), ("'ending quote'",)),
+            (Lexeme("double quo''te"), ("'double quo te'",)),
+            (Lexeme("triple quo'''te"), ("'triple quo te'",)),
+            (Lexeme("backslash\\"), ("'backslash'",)),
+            (Lexeme("exclamation!"), ("'exclamation'",)),
+            (Lexeme("ampers&nd"), ("'ampers nd'",)),
         )
 
         expected_sql = "%s"
@@ -935,3 +935,10 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
 
         with self.assertRaisesMessage(TypeError, msg):
             Line.objects.filter(dialogue__search=None & Lexeme("kneecaps"))
+
+    def test_invalid_weights(self):
+        msg = "Weight must be one of 'A', 'B', 'C', and 'D', got '%s'."
+        invalid_weights = ["E", "Drandom", "AB", "C ", 0, "", " ", [1, 2, 3]]
+        for weight in invalid_weights:
+            with self.assertRaisesMessage(ValueError, msg % weight):
+                Line.objects.filter(dialogue__search=Lexeme("kneecaps", weight=weight))

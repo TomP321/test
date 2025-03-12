@@ -128,7 +128,7 @@ See :ref:`postgresql-fts-search-configuration` for an explanation of the
 
 .. versionchanged:: 6.0
 
-    ``Lexeme`` objects were added
+    ``Lexeme`` objects were added.
 
 ``SearchRank``
 ==============

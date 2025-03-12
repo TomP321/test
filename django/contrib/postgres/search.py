@@ -449,7 +449,9 @@ class Lexeme(LexemeCombinable, Value):
     def __init__(
         self, value, output_field=None, *, invert=False, prefix=False, weight=None
     ):
-        if weight and weight.lower() not in {"a", "b", "c", "d"}:
+        if weight is not None and (
+            not isinstance(weight, str) or weight.lower() not in {"a", "b", "c", "d"}
+        ):
             raise ValueError(
                 f"Weight must be one of 'A', 'B', 'C', and 'D', got '{weight}'."
             )
@@ -485,7 +487,7 @@ class Lexeme(LexemeCombinable, Value):
         if self.invert:
             param = f"!{param}"
 
-        return "%s", [param]
+        return "%s", (param,)
 
     def as_sql(self, compiler, connection):
         return self.process_rhs(compiler, connection)
@@ -509,7 +511,7 @@ class CombinedLexeme(LexemeCombinable, CombinedExpression):
 
         combined_sql = f"({lsql} {self.connector} {rsql})"
         combined_value = combined_sql % tuple(value_params)
-        return "%s", [combined_value]
+        return "%s", (combined_value,)
 
     def __invert__(self):
         # Swap the connector and invert the lhs and rhs.

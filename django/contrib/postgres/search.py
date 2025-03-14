@@ -411,24 +411,22 @@ class LexemeCombinable:
     BITAND = "&"
     BITOR = "|"
 
-    def _combine(self, other, connector, reversed, node=None):
+    def _combine(self, other, connector, node=None):
         if not isinstance(other, LexemeCombinable):
             raise TypeError(
                 "A Lexeme can only be combined with another Lexeme, "
                 f"got {other.__class__.__name__}."
             )
-        if reversed:
-            return CombinedLexeme(other, connector, self)
         return CombinedLexeme(self, connector, other)
 
     # On Combinable, these are not implemented to reduce confusion with Q. In
     # this case we are actually (ab)using them to do logical combination so
     # it's consistent with other usage in Django.
     def bitor(self, other):
-        return self._combine(other, self.BITOR, False)
+        return self._combine(other, self.BITOR)
 
     def bitand(self, other):
-        return self._combine(other, self.BITAND, False)
+        return self._combine(other, self.BITAND)
 
     def __or__(self, other):
         return self.bitor(other)
@@ -437,10 +435,10 @@ class LexemeCombinable:
         return self.bitand(other)
 
     def __ror__(self, other):
-        return self._combine(other, self.BITOR, True)
+        return self.bitor(other)
 
     def __rand__(self, other):
-        return self._combine(other, self.BITOR, True)
+        return self.bitand(other)
 
 
 class Lexeme(LexemeCombinable, Value):

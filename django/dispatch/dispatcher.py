@@ -29,7 +29,9 @@ class Signal:
     Internal attributes:
 
         receivers:
-            [((id(receiver), id(sender))), ref(receiver), ref(sender), is_async)]
+            [((id(receiver), id(sender))), ref(receiver), is_async)]
+        sender_refs:
+            {(id(receiver), id(sender)): ref(sender)}
         sender_receivers_cache:
             WeakKeyDictionary[sender, list[receiver]]
     """
@@ -39,6 +41,7 @@ class Signal:
         Create a new signal.
         """
         self.receivers = []
+        self.sender_refs = {}
         self.lock = threading.Lock()
         self.use_caching = use_caching
         # For convenience we create empty caches even if they are not used.
@@ -125,8 +128,10 @@ class Signal:
 
         with self.lock:
             self._clear_dead_receivers()
-            if not any(r_key == lookup_key for r_key, _, _, _ in self.receivers):
-                self.receivers.append((lookup_key, receiver, sender_ref, is_async))
+            if not any(r_key == lookup_key for r_key, _, _ in self.receivers):
+                self.receivers.append((lookup_key, receiver, is_async))
+                if sender_ref is not None:
+                    self.sender_refs[lookup_key] = sender_ref
             self.sender_receivers_cache.clear()
 
     def disconnect(self, receiver=None, sender=None, dispatch_uid=None):
@@ -420,14 +425,29 @@ class Signal:
         # Note: caller is assumed to hold self.lock.
         if self._dead_receivers:
             self._dead_receivers = False
-            self.receivers = [
-                r
-                for r in self.receivers
+            receivers = []
+            for receiver in self.receivers:
+                dead_receiver = False
                 if (
-                    not (isinstance(r[1], weakref.ReferenceType) and r[1]() is None)
-                    and not (r[2] is not None and r[2]() is None)
-                )
-            ]
+                    isinstance(
+                        receiver_ref := receiver[1],
+                        weakref.ReferenceType,
+                    )
+                    and receiver_ref() is None
+                ):
+                    dead_receiver = True
+                if (
+                    isinstance(
+                        sender_ref := self.sender_refs.get(lookup_key := receiver[0]),
+                        weakref.ReferenceType,
+                    )
+                    and sender_ref() is None
+                ):
+                    self.sender_refs.pop(lookup_key)
+                    dead_receiver = True
+                if not dead_receiver:
+                    receivers.append(receiver)
+            self.receivers = receivers
 
     def _live_receivers(self, sender):
         """
@@ -448,14 +468,9 @@ class Signal:
                 self._clear_dead_receivers()
                 senderkey = _make_id(sender)
                 receivers = []
-                for (
-                    (_receiverkey, r_senderkey),
-                    receiver,
-                    sender_ref,
-                    is_async,
-                ) in self.receivers:
+                for (_receiverkey, r_senderkey), receiver, is_async in self.receivers:
                     if r_senderkey == NONE_ID or r_senderkey == senderkey:
-                        receivers.append((receiver, sender_ref, is_async))
+                        receivers.append((receiver, is_async))
                 if self.use_caching:
                     if not receivers:
                         self.sender_receivers_cache[sender] = NO_RECEIVERS
@@ -464,18 +479,20 @@ class Signal:
                         self.sender_receivers_cache[sender] = receivers
         non_weak_sync_receivers = []
         non_weak_async_receivers = []
-        for receiver, sender_ref, is_async in receivers:
-            # Skip if the receiver/sender is a dead weakref
+        for receiver, is_async in receivers:
             if isinstance(receiver, weakref.ReferenceType):
+                # Dereference the weak reference.
                 receiver = receiver()
-                if receiver is None:
-                    continue
-            if sender_ref is not None and sender_ref() is None:
-                continue
-            if is_async:
-                non_weak_async_receivers.append(receiver)
+                if receiver is not None:
+                    if is_async:
+                        non_weak_async_receivers.append(receiver)
+                    else:
+                        non_weak_sync_receivers.append(receiver)
             else:
-                non_weak_sync_receivers.append(receiver)
+                if is_async:
+                    non_weak_async_receivers.append(receiver)
+                else:
+                    non_weak_sync_receivers.append(receiver)
         return non_weak_sync_receivers, non_weak_async_receivers
 
     def _flag_dead_receivers(self, reference=None):

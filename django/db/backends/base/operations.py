@@ -790,6 +790,12 @@ class BaseDatabaseOperations:
         # Hook for backends (e.g. NoSQL) to customize formatting.
         return sqlparse.format(sql, reindent=True, keyword_case="upper")
 
+    def format_json_path_numeric_index(self, num):
+        """
+        Hook for backends to customize indexing in JSON paths.
+        """
+        return "[%s]" % num
+
     def compile_json_path(self, key_transforms, include_root=True):
         """
         Hook for backends to customize all aspects of JSON path construction.
@@ -802,5 +808,5 @@ class BaseDatabaseOperations:
                 path.append(".")
                 path.append(json.dumps(key_transform))
             else:
-                path.append("[%s]" % num)
+                path.append(self.format_json_path_numeric_index(num))
         return "".join(path)

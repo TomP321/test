@@ -368,6 +368,47 @@ class BasicSyntaxTests(SimpleTestCase):
         ).strip()
         self.assertEqual(output, "b")
 
+    @setup(
+        {
+            "basic-syntax39-multiline": """
+                {{
+                    foo
+                        | upper
+                }}
+                """
+        }
+    )
+    def test_basic_syntax39_multiline_variable(self):
+        """
+        Embedded newlines are ok in multiline mode.
+        """
+        output = self.multiline_engine.render_to_string(
+            "basic-syntax39-multiline", {"foo": "foo"}
+        ).strip()
+        self.assertEqual(output, "FOO")
+
+    @setup(
+        {
+            "basic-syntax39-multiline":
+                """
+                {% with a=3
+                     b='bar'|upper
+                     c=foo|upper
+                %}
+                    {{ a }} {{ b }} {{ c }}
+                {% endwith %}
+                """
+        }
+    )
+    def test_basic_syntax39_multiline_complex_with(self):
+        """
+        Embedded newlines are ok in multiline mode.
+        """
+        output = self.multiline_engine.render_to_string(
+            "basic-syntax39-multiline", {"foo": "foo"}
+        ).strip()
+        self.assertEqual(output, "3 BAR FOO")
+
     @setup({"template": "{% block content %}"})
     def test_unclosed_block(self):
         msg = "Unclosed tag on line 1: 'block'. Looking for one of: endblock."

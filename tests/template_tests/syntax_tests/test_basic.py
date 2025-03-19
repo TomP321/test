@@ -389,8 +389,7 @@ class BasicSyntaxTests(SimpleTestCase):
 
     @setup(
         {
-            "basic-syntax39-multiline":
-                """
+            "basic-syntax39-multiline": """
                 {% with a=3
                      b='bar'|upper
                      c=foo|upper

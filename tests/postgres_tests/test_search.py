@@ -928,6 +928,13 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
 
         self.assertSequenceEqual(searched, [self.verse0, self.verse1])
 
+    def test_french(self):
+        searched = Line.objects.annotate(
+            search=SearchVector("scene__setting", "dialogue"),
+        ).filter(search=SearchQuery(Lexeme("cadeau"), config="french"))
+
+        self.assertSequenceEqual(searched, [self.french])
+
     def test_invalid_combinations(self):
         msg = "A Lexeme can only be combined with another Lexeme, got NoneType."
         with self.assertRaisesMessage(TypeError, msg):

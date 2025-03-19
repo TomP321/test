@@ -447,6 +447,14 @@ class Lexeme(LexemeCombinable, Value):
     def __init__(
         self, value, output_field=None, *, invert=False, prefix=False, weight=None
     ):
+        if value == "":
+            raise ValueError("Lexeme value cannot be empty.")
+
+        if not isinstance(value, str):
+            raise TypeError(
+                f"Lexeme value must be a string, got {value.__class__.__name__}."
+            )
+
         if weight is not None and (
             not isinstance(weight, str) or weight.lower() not in {"a", "b", "c", "d"}
         ):

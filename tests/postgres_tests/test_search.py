@@ -829,7 +829,7 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
 
     def test_advanced_invert(self):
         """
-        Inverting a query that uses a cominbation of & and |
+        Inverting a query that uses a combination of & and |
         Should return the opposite of test_advanced
         """
         searched = Line.objects.annotate(search=SearchVector("dialogue")).filter(
@@ -937,8 +937,31 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
             Line.objects.filter(dialogue__search=None & Lexeme("kneecaps"))
 
     def test_invalid_weights(self):
-        msg = "Weight must be one of 'A', 'B', 'C', and 'D', got '%s'."
         invalid_weights = ["E", "Drandom", "AB", "C ", 0, "", " ", [1, 2, 3]]
         for weight in invalid_weights:
-            with self.assertRaisesMessage(ValueError, msg % weight):
-                Line.objects.filter(dialogue__search=Lexeme("kneecaps", weight=weight))
+            with self.subTest(weight=weight):
+                with self.assertRaisesMessage(
+                    ValueError,
+                    f"Weight must be one of 'A', 'B', 'C', and 'D', got '{weight}'.",
+                ):
+                    Line.objects.filter(
+                        dialogue__search=Lexeme("kneecaps", weight=weight)
+                    )
+
+    def test_empty(self):
+        with self.assertRaisesMessage(ValueError, "Lexeme value cannot be empty."):
+            Line.objects.annotate(
+                search=SearchVector("scene__setting", "dialogue"),
+            ).filter(search=SearchQuery(Lexeme("")))
+
+    def test_non_string_values(self):
+        non_string_values = [None, 1, 1.5, True, [], {}, object()]
+        for value in non_string_values:
+            with self.subTest(value=value):
+                with self.assertRaisesMessage(
+                    TypeError,
+                    f"Lexeme value must be a string, got {value.__class__.__name__}.",
+                ):
+                    Line.objects.annotate(
+                        search=SearchVector("scene__setting", "dialogue"),
+                    ).filter(search=SearchQuery(Lexeme(value)))

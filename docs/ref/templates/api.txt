@@ -144,7 +144,7 @@ overridden by what's passed by
       recommended setting. Multiline support in templates means that newline
       between ``{%`` and ``%}`` in templates is allowed.
 
-      It defaults to ``True``.
+      It defaults to ``False``.
 
 .. staticmethod:: Engine.get_default()
 

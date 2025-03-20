@@ -5,7 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 
-from ..utils.deprecation import RemovedInDjango60Warning
+from ..utils.deprecation import RemovedInDjango70Warning
 from .base import Template
 from .context import Context, _builtin_context_processors
 from .exceptions import TemplateDoesNotExist
@@ -35,8 +35,8 @@ class Engine:
     ):
         if not multiline:
             warnings.warn(
-                "Multiline tags in templates will become the default in Django 6.0",
-                RemovedInDjango60Warning,
+                "Multiline tags in templates will become the default in Django 7.0",
+                RemovedInDjango70Warning,
             )
         if dirs is None:
             dirs = []

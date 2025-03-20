@@ -51,8 +51,8 @@ warnings.simplefilter("error", RemovedInDjango61Warning)
 # Ignore this message as the test suite uses the default
 warnings.filterwarnings(
     "ignore",
-    message="Multiline tags in templates will become the default in Django 6.0",
-    category=RemovedInDjango60Warning,
+    message="Multiline tags in templates will become the default in Django 7.0",
+    category=RemovedInDjango70Warning,
 )
 # Make resource and runtime warning errors to ensure no usage of error prone
 # patterns.

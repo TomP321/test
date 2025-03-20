@@ -31,7 +31,9 @@ class Engine:
         libraries=None,
         builtins=None,
         autoescape=True,
-        multiline=False,  # RemovedInDjango70Warning: When the deprecation ends, replace with: multiline=True,
+        # RemovedInDjango70Warning: When the deprecation ends, replace
+        # with: multiline=True,
+        multiline=False,
     ):
         if not multiline:
             warnings.warn(

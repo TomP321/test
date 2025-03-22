@@ -1799,6 +1799,10 @@ class RedisCacheTests(BaseCacheTests, TestCase):
         super().setUp()
         self.lib = redis
 
+        # Clear pools, because the pool is process-global,
+        # so every case will use the pools created in previous cases
+        self.addCleanup(cache._cache._pools.clear)
+
     @property
     def incr_decr_type_error(self):
         return self.lib.ResponseError
@@ -1870,26 +1874,27 @@ class RedisCacheTests(BaseCacheTests, TestCase):
         self.assertEqual(pool.connection_kwargs["socket_timeout"], 0.1)
         self.assertIs(pool.connection_kwargs["retry_on_timeout"], True)
 
-    def test_redis_common_pool(self):
-        pool1 = cache._cache._get_connection_pool(write=False)
-        pool2 = cache._cache._get_connection_pool(write=False)
-        self.assertEqual(id(pool1), id(pool2))
+    def test_redis_pool_is_global(self):
 
-        @override_settings(
-            CACHES=caches_setting_for_tests(
-                base=RedisCache_params,
-                exclude=redis_excluded_caches,
-                OPTIONS={
-                    "db": 6,
-                    "socket_timeout": 0.1,
-                    "retry_on_timeout": True,
-                },
-            )
-        )
-        def get_connection_pool():
-            return cache._cache._get_connection_pool(write=False)
+        class ResultContainer:
+            def __init__(self):
+                self.result1 = None
+                self.result2 = None
 
-        self.assertNotEqual(id(pool1), id(get_connection_pool()))
+        result = ResultContainer()
+
+        def get_connection_pool(result, slot):
+            setattr(result, slot, cache._cache._get_connection_pool(write=False))
+
+        t1 = threading.Thread(target=get_connection_pool, args=(result, "result1"))
+        t2 = threading.Thread(target=get_connection_pool, args=(result, "result2"))
+
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        self.assertEqual(id(result.result1), id(result.result2))
 
 
 class FileBasedCachePathLibTests(FileBasedCacheTests):

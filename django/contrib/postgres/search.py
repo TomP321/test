@@ -478,9 +478,11 @@ class Lexeme(LexemeCombinable, Value):
 
             param = StringDumper(str).quote(escaped_value).decode()
         else:
-            from psycopg2.extensions import adapt
+            from psycopg2.extensions import QuotedString
 
-            param = adapt(escaped_value).getquoted().decode("latin-1")
+            quoted = QuotedString(escaped_value)
+            quoted.prepare(None)
+            param = quoted.getquoted().decode()
 
         label = ""
         if self.prefix:

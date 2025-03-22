@@ -928,11 +928,34 @@ class TestLexemes(GrailTestData, PostgreSQLTestCase):
 
         self.assertSequenceEqual(searched, [self.verse0, self.verse1])
 
-    def test_french(self):
+    def test_config_query_explicit(self):
         searched = Line.objects.annotate(
-            search=SearchVector("scene__setting", "dialogue"),
-        ).filter(search=SearchQuery(Lexeme("cadeau"), config="french"))
+            search=SearchVector("scene__setting", "dialogue", config="french"),
+        ).filter(search=SearchQuery(Lexeme("cadeaux"), config="french"))
 
+        self.assertSequenceEqual(searched, [self.french])
+
+    def test_config_query_implicit(self):
+        searched = Line.objects.annotate(
+            search=SearchVector("scene__setting", "dialogue", config="french"),
+        ).filter(search=Lexeme("cadeaux"))
+
+        self.assertSequenceEqual(searched, [self.french])
+
+    def test_config_from_field_explicit(self):
+        searched = Line.objects.annotate(
+            search=SearchVector(
+                "scene__setting", "dialogue", config=F("dialogue_config")
+            ),
+        ).filter(search=SearchQuery(Lexeme("cadeaux"), config=F("dialogue_config")))
+        self.assertSequenceEqual(searched, [self.french])
+
+    def test_config_from_field_implicit(self):
+        searched = Line.objects.annotate(
+            search=SearchVector(
+                "scene__setting", "dialogue", config=F("dialogue_config")
+            ),
+        ).filter(search=Lexeme("cadeaux"))
         self.assertSequenceEqual(searched, [self.french])
 
     def test_invalid_combinations(self):
